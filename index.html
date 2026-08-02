@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VR Gaming Arena - Responsive System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VR Gaming Arena - Universal Responsive System</title>
 
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -12,28 +12,158 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
-        body { background-color: #0b0914; color: #ffffff; padding: 12px; min-height: 100vh; }
+        * { 
+            box-sizing: border-box; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            touch-action: manipulation; /* Removes tap delay on iOS & Android */
+        }
+
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+            background-color: #0b0914; 
+            color: #ffffff;
+        }
+
+        body { 
+            padding: calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+            min-height: 100vh; 
+        }
         
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a244d; padding-bottom: 10px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
-        .header h1 { font-size: 20px; color: #00f0ff; text-transform: uppercase; letter-spacing: 1px; }
-        .staff-tag { background: #251f3d; padding: 6px 12px; border-radius: 20px; font-size: 13px; border: 1px solid #6c5ce7; color: #a29bfe; font-weight: 500; }
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid #2a244d; 
+            padding-bottom: 10px; 
+            margin-bottom: 14px; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+        }
         
-        .dashboard { display: grid; grid-template-columns: 340px 1fr 380px; gap: 14px; min-height: calc(100vh - 70px); }
-        .column { display: flex; flex-direction: column; gap: 14px; }
+        .header h1 { 
+            font-size: clamp(16px, 4vw, 22px); 
+            color: #00f0ff; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+        }
+
+        .staff-tag { 
+            background: #251f3d; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            border: 1px solid #6c5ce7; 
+            color: #a29bfe; 
+            font-weight: 500; 
+            white-space: nowrap;
+        }
         
-        .card { background: #151226; border: 1px solid #2a244d; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; }
-        .card h2 { font-size: 14px; color: #a29bfe; margin-bottom: 10px; border-bottom: 1px solid #2a244d; padding-bottom: 6px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        /* RESPONSIVE AUTO-ADJUST DASHBOARD GRID */
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 14px; 
+            width: 100%;
+        }
+
+        @media (min-width: 1100px) {
+            .dashboard {
+                grid-template-columns: 320px 1fr 360px;
+            }
+        }
         
-        label { font-size: 12px; color: #8c82c2; font-weight: bold; margin-top: 8px; display: block; }
-        input, select, button { width: 100%; padding: 10px 12px; margin-top: 4px; border-radius: 8px; border: 1px solid #3c346b; background: #0b0914; color: #fff; font-size: 15px; min-height: 44px; }
-        input:focus, select:focus { outline: 2px solid #00f0ff; }
+        .column { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 14px; 
+            width: 100%;
+        }
         
-        button { background: #6c5ce7; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        button:active { opacity: 0.8; transform: scale(0.98); }
-        button:hover { background: #00f0ff; color: #000; }
+        .card { 
+            background: #151226; 
+            border: 1px solid #2a244d; 
+            border-radius: 12px; 
+            padding: 14px; 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%;
+        }
+
+        .card h2 { 
+            font-size: 13px; 
+            color: #a29bfe; 
+            margin-bottom: 10px; 
+            border-bottom: 1px solid #2a244d; 
+            padding-bottom: 6px; 
+            text-transform: uppercase; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
         
-        .status-box { padding: 12px; border-radius: 8px; font-size: 13px; display: none; margin-top: 10px; line-height: 1.5; }
+        label { 
+            font-size: 11px; 
+            color: #8c82c2; 
+            font-weight: bold; 
+            margin-top: 8px; 
+            display: block; 
+        }
+
+        input, select, button { 
+            width: 100%; 
+            padding: 10px 12px; 
+            margin-top: 4px; 
+            border-radius: 8px; 
+            border: 1px solid #3c346b; 
+            background: #0b0914; 
+            color: #fff; 
+            font-size: 15px; /* Prevents auto-zoom on iOS */
+            min-height: 46px; 
+            -webkit-appearance: none;
+        }
+
+        input:focus, select:focus { 
+            outline: 2px solid #00f0ff; 
+        }
+        
+        button { 
+            background: #6c5ce7; 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border: none; 
+            margin-top: 10px; 
+            transition: background 0.2s, transform 0.1s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
+            user-select: none;
+        }
+
+        button:active { 
+            opacity: 0.85; 
+            transform: scale(0.98); 
+        }
+
+        button:hover { 
+            background: #00f0ff; 
+            color: #000; 
+        }
+        
+        .status-box { 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-size: 13px; 
+            display: none; 
+            margin-top: 10px; 
+            line-height: 1.5; 
+            word-break: break-word;
+        }
+
         .status-success { background: #004d40; border: 1px solid #00b894; color: #e0f2f1; }
         .status-expired { background: #4a0e0e; border: 1px solid #d63031; color: #ffebee; }
         .status-warning { background: #5c4300; border: 1px solid #fdcb6e; color: #fff8e1; }
@@ -41,39 +171,67 @@
         .timer-btn { background: #00b894; color: #000; font-size: 14px; font-weight: bold; padding: 10px; margin-top: 8px; border-radius: 6px; width: 100%; }
         .wa-btn { background: #25d366; color: #000; font-size: 13px; font-weight: bold; padding: 10px; margin-top: 8px; border: none; cursor: pointer; width: 100%; border-radius: 6px; }
 
-        .timers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .timer-card { background: #1c1833; border: 1px solid #3c346b; border-radius: 8px; padding: 12px; text-align: center; }
+        /* DYNAMIC AUTO-FITTING TIMERS GRID */
+        .timers-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); 
+            gap: 10px; 
+            width: 100%;
+        }
+
+        .timer-card { 
+            background: #1c1833; 
+            border: 1px solid #3c346b; 
+            border-radius: 8px; 
+            padding: 10px; 
+            text-align: center; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
         .timer-card.paused { border-color: #fdcb6e; background: #262111; }
         .timer-card.time-up { border-color: #d63031; background: #3b1111; animation: blink 1s infinite; }
         
         @keyframes blink { 50% { border-color: transparent; } }
 
-        .timer-card .device-badge { font-size: 11px; background: #6c5ce7; color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
-        .timer-card .name { font-size: 14px; font-weight: bold; color: #fff; }
-        .timer-card .clock { font-size: 24px; font-weight: bold; color: #00f0ff; background: #090712; border-radius: 6px; padding: 6px 0; font-family: monospace; margin: 6px 0; }
+        .timer-card .device-badge { font-size: 10px; background: #6c5ce7; color: #fff; padding: 3px 6px; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 4px; }
+        .timer-card .name { font-size: 13px; font-weight: bold; color: #fff; word-break: break-word; }
+        .timer-card .clock { font-size: clamp(20px, 5vw, 24px); font-weight: bold; color: #00f0ff; background: #090712; border-radius: 6px; padding: 6px 0; font-family: monospace; margin: 6px 0; }
         .timer-card.paused .clock { color: #fdcb6e; }
         .timer-card.time-up .clock { color: #ff7675; }
         
-        .timer-controls { display: flex; gap: 6px; margin-top: 8px; }
-        .timer-ctrl-btn { font-size: 12px; padding: 8px; border-radius: 6px; min-height: 38px; flex: 1; margin-top: 0; }
+        .timer-controls { display: flex; gap: 4px; margin-top: 6px; }
+        .timer-ctrl-btn { font-size: 11px; padding: 6px; border-radius: 6px; min-height: 38px; flex: 1; margin-top: 0; }
         .btn-pause { background: #fdcb6e; color: #000; }
         .btn-resume { background: #00b894; color: #000; }
         .btn-stop { background: #d63031; color: #fff; }
 
-        .table-wrapper { flex: 1; overflow-x: auto; max-height: 240px; margin-top: 6px; border: 1px solid #2a244d; border-radius: 6px; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 320px; }
+        /* TOUCH-FRIENDLY SCROLLABLE TABLES */
+        .table-wrapper { 
+            flex: 1; 
+            overflow-x: auto; 
+            max-height: 260px; 
+            margin-top: 6px; 
+            border: 1px solid #2a244d; 
+            border-radius: 6px; 
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 300px; }
         th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2a244d; vertical-align: middle; }
         th { background: #1c1833; color: #00f0ff; position: sticky; top: 0; z-index: 10; }
         tr:nth-child(even) { background: #0d0b1a; }
         
         .action-group { display: flex; gap: 4px; flex-wrap: nowrap; }
-        .action-btn { cursor: pointer; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; min-height: 32px; width: auto; margin: 0; border: none; display: inline-flex; align-items: center; justify-content: center; }
+        .action-btn { cursor: pointer; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; min-height: 34px; width: auto; margin: 0; border: none; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
         .action-card { background: #00b894; color: #000; }
         .action-edit { background: #6c5ce7; color: white; }
         .action-delete { background: #d63031; color: white; }
 
+        /* AUTO-ADJUST MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 12px; }
-        .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 12px; width: 100%; max-width: 450px; padding: 16px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 12px; width: 100%; max-width: 420px; padding: 16px; max-height: 90vh; overflow-y: auto; }
 
         .member-card-wrapper {
             background: linear-gradient(135deg, #090712 0%, #1c1833 100%);
@@ -81,7 +239,8 @@
             border-radius: 10px;
             padding: 12px;
             color: #fff;
-            width: 325px;
+            width: 100%;
+            max-width: 325px;
             height: 204px;
             margin: 10px auto;
             box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
@@ -91,12 +250,13 @@
             text-align: left;
             box-sizing: border-box;
         }
+
         .card-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3c346b; padding-bottom: 4px; }
         .card-title { font-size: 11px; font-weight: bold; color: #00f0ff; letter-spacing: 0.5px; }
         .card-sub { font-size: 9px; font-weight: bold; color: #a29bfe; background: #251f3d; padding: 2px 6px; border-radius: 4px; }
         .card-body { display: flex; justify-content: space-between; align-items: center; height: 100%; margin-top: 4px; }
         .card-info { flex: 1; padding-right: 6px; }
-        .card-name { font-size: 14px; font-weight: bold; color: #fff; line-height: 1.2; word-break: break-word; }
+        .card-name { font-size: 13px; font-weight: bold; color: #fff; line-height: 1.2; word-break: break-word; }
         .card-phone { font-size: 11px; color: #fdcb6e; margin-top: 2px; margin-bottom: 6px; }
         .card-details { font-size: 9px; color: #a29bfe; line-height: 1.3; }
         .qr-container { background: #fff; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
@@ -125,24 +285,16 @@
             #printableCard .card-sub { background: #eee !important; color: #000 !important; }
             #printableCard .card-phone, #printableCard .card-details { color: #333 !important; }
         }
-
-        @media (max-width: 980px) {
-            .dashboard { grid-template-columns: 1fr; }
-            body { padding: 8px; }
-            .header h1 { font-size: 18px; }
-            .timer-card .clock { font-size: 28px; }
-            .modal-content { padding: 14px; width: 95%; }
-        }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1>🎮 VR Gaming Arena</h1>
-    <div style="display: flex; gap: 8px; align-items: center; width: 100%; max-width: 380px; justify-content: flex-end;">
+    <div style="display: flex; gap: 6px; align-items: center; width: 100%; max-width: 380px; justify-content: flex-end; flex-wrap: wrap;">
         <span class="staff-tag" id="currentStaffBadge">Staff: Counter Admin</span>
         <button onclick="sendBackupToWhatsApp('Manual Custom Backup')" style="width: auto; margin: 0; padding: 6px 10px; font-size: 12px; background: #25d366; color: #000; min-height: 36px;">📲 Backup WA</button>
-        <button onclick="openSettingsModal()" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; background: #251f3d; border: 1px solid #3c346b; min-height: 36px;">⚙️ Settings</button>
+        <button onclick="openSettingsModal()" style="width: auto; margin: 0; padding: 6px 10px; font-size: 12px; background: #251f3d; border: 1px solid #3c346b; min-height: 36px;">⚙️ Settings</button>
     </div>
 </div>
 
@@ -156,7 +308,7 @@
                 <label>Phone Number or Code:</label>
                 <div style="display: flex; gap: 6px;">
                     <input type="tel" id="checkInPhone" placeholder="Enter Phone / Scan Code" autofocus required style="flex: 1;">
-                    <button type="submit" style="width: 90px; margin-top: 4px; background: #00f0ff; color: #000;">VERIFY</button>
+                    <button type="submit" style="width: 85px; margin-top: 4px; background: #00f0ff; color: #000; min-height: 46px;">VERIFY</button>
                 </div>
             </form>
             
@@ -195,7 +347,7 @@
 
     <!-- MIDDLE COLUMN -->
     <div class="column">
-        <div class="card" style="min-height: 300px;">
+        <div class="card" style="min-height: 280px;">
             <h2>
                 <span>⏱️ Live Gaming Timers</span>
                 <span id="activeCount" style="color: #00f0ff; font-size: 12px;">0 Active</span>
@@ -246,7 +398,7 @@
 <!-- CAMERA SCANNER MODAL -->
 <div id="cameraModal" class="modal">
     <div class="modal-content" style="text-align: center;">
-        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 16px;">📷 Align Member Card QR Code</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 15px;">📷 Align Member Card QR Code</h2>
         <div id="qr-reader"></div>
         <button onclick="closeCameraScanner()" style="background: #d63031; margin-top: 14px;">CANCEL SCAN</button>
     </div>
@@ -255,7 +407,7 @@
 <!-- CARD PRINT MODAL -->
 <div id="cardModal" class="modal">
     <div class="modal-content" style="text-align: center;">
-        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 16px;">📇 Member Digital Card</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 15px;">📇 Member Digital Card</h2>
         
         <div id="printableCard" class="member-card-wrapper">
             <div class="card-top">
@@ -285,7 +437,7 @@
 <!-- EDIT MEMBER MODAL -->
 <div id="editModal" class="modal">
     <div class="modal-content">
-        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 16px;">✏️ Edit Member Details</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 15px;">✏️ Edit Member Details</h2>
         <input type="hidden" id="editMemberPhone">
         
         <label>Member Name:</label>
@@ -302,7 +454,7 @@
 <!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
-        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 16px;">⚙️ System Settings</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 15px;">⚙️ System Settings</h2>
         
         <label>Active Staff Name:</label>
         <input type="text" id="staffNameInput" value="Counter Admin" placeholder="e.g. Cashier 1">
@@ -318,7 +470,7 @@
 
         <hr style="border-color: #2a244d; margin: 14px 0;">
 
-        <h3 style="color: #00f0ff; font-size: 14px; margin-bottom: 6px;">💾 Database & Backup Tools</h3>
+        <h3 style="color: #00f0ff; font-size: 13px; margin-bottom: 6px;">💾 Database & Backup Tools</h3>
         <p style="font-size: 11px; color: #8c82c2; margin-bottom: 8px;">Auto Backups run daily at <b>10:00 PM</b> and <b>02:00 AM</b> to WhatsApp number: <b>+923428020029</b></p>
         
         <button onclick="sendBackupToWhatsApp('Custom Manual Backup')" style="background: #25d366; color: #000;">📲 CUSTOM SEND BACKUP TO WHATSAPP</button>
@@ -329,7 +481,7 @@
 </div>
 
 <script>
-    const BACKUP_PHONE = '923428020029'; // TARGET BACKUP WHATSAPP NUMBER
+    const BACKUP_PHONE = '923428020029';
 
     function formatName(n) { return n.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); }
     function formatPhone(p) { return p.replace(/[^0-9]/g, '').trim(); }
@@ -357,7 +509,7 @@
     document.getElementById('autoWaToggle').value = autoWaSetting;
 
     setInterval(updateTimersDisplay, 1000);
-    setInterval(checkScheduledBackup, 30000); // Check auto-backup schedule every 30s
+    setInterval(checkScheduledBackup, 30000);
     renderTables();
 
     function saveData() {
@@ -417,7 +569,6 @@
         const mins = now.getMinutes();
         const currentDateStr = now.toISOString().split('T')[0];
         
-        // Target: 10:00 PM (22:00) or 2:00 AM (02:00)
         if ((hours === 22 && mins === 0) || (hours === 2 && mins === 0)) {
             const timeKey = `${currentDateStr}_${hours}:${mins}`;
             if (lastAutoBackupTime !== timeKey) {
@@ -541,7 +692,7 @@
 
         html5QrCode.start(
             { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 220, height: 220 } },
+            { fps: 10, qrbox: { width: 200, height: 200 } },
             (decodedText) => {
                 document.getElementById('checkInPhone').value = decodedText;
                 closeCameraScanner();
