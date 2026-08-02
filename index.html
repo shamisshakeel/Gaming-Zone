@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VR Gaming Arena - QR & Camera Verification</title>
+    <title>VR Gaming Arena - Standard System</title>
 
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -73,35 +73,58 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
         .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 8px; width: 100%; max-width: 450px; padding: 15px; }
 
-        /* PRINTABLE CARD STYLING */
+        /* DEBIT CARD SIZE STYLING (Standard CR80 Ratio: 325px x 204px) */
         .member-card-wrapper {
             background: linear-gradient(135deg, #090712 0%, #1c1833 100%);
             border: 2px solid #00f0ff;
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 10px;
+            padding: 12px;
             color: #fff;
-            width: 320px;
+            width: 325px;
+            height: 204px;
             margin: 10px auto;
             box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: left;
+            box-sizing: border-box;
         }
-        .member-card-wrapper .card-title { font-size: 14px; font-weight: bold; color: #00f0ff; text-transform: uppercase; letter-spacing: 1px; }
-        .member-card-wrapper .card-sub { font-size: 9px; color: #a29bfe; margin-bottom: 12px; }
-        .member-card-wrapper .card-name { font-size: 16px; font-weight: bold; color: #fff; margin-top: 4px; }
-        .member-card-wrapper .card-phone { font-size: 12px; color: #fdcb6e; margin-bottom: 8px; }
-        .member-card-wrapper .qr-container { background: #fff; padding: 8px; border-radius: 8px; display: inline-block; margin: 8px 0; }
-        .member-card-wrapper .card-footer { font-size: 10px; color: #8c82c2; margin-top: 6px; }
+        .card-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3c346b; padding-bottom: 4px; }
+        .card-title { font-size: 11px; font-weight: bold; color: #00f0ff; letter-spacing: 0.5px; }
+        .card-sub { font-size: 9px; font-weight: bold; color: #a29bfe; background: #251f3d; padding: 2px 6px; border-radius: 4px; }
+        .card-body { display: flex; justify-content: space-between; align-items: center; height: 100%; margin-top: 4px; }
+        .card-info { flex: 1; padding-right: 6px; }
+        .card-name { font-size: 14px; font-weight: bold; color: #fff; line-height: 1.2; word-break: break-word; }
+        .card-phone { font-size: 11px; color: #fdcb6e; margin-top: 2px; margin-bottom: 6px; }
+        .card-details { font-size: 9px; color: #a29bfe; line-height: 1.3; }
+        .qr-container { background: #fff; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
         /* CAMERA READER STYLING */
         #qr-reader { width: 100%; border: 2px solid #00f0ff; border-radius: 8px; overflow: hidden; }
         #qr-reader video { width: 100% !important; border-radius: 6px; }
 
+        /* PRINT MEDIA RULE: PRINTS EXACT DEBIT CARD SIZE */
         @media print {
             body * { visibility: hidden; }
             #printableCard, #printableCard * { visibility: visible; }
-            #printableCard { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none; border: 2px solid #000; background: #fff !important; color: #000 !important; }
+            #printableCard { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 85.6mm !important; 
+                height: 53.98mm !important; 
+                margin: 0; 
+                padding: 8mm; 
+                box-shadow: none; 
+                border: 1px solid #000; 
+                background: #fff !important; 
+                color: #000 !important; 
+                border-radius: 6px;
+            }
             #printableCard .card-title, #printableCard .card-name { color: #000 !important; }
-            #printableCard .card-sub, #printableCard .card-phone, #printableCard .card-footer { color: #333 !important; }
+            #printableCard .card-sub { background: #eee !important; color: #000 !important; }
+            #printableCard .card-phone, #printableCard .card-details { color: #333 !important; }
         }
 
         @media (max-width: 900px) {
@@ -162,7 +185,7 @@
                     <option value="30 Days - 1 Hour (Rs 5500)|30|60">30 Days — 1 Hour/visit (Rs 5500)</option>
                 </select>
 
-                <button type="submit">SAVE & GENERATE CARD</button>
+                <button type="submit">SAVE MEMBER</button>
             </form>
         </div>
     </div>
@@ -232,18 +255,22 @@
         <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">📇 Member Digital Card</h2>
         
         <div id="printableCard" class="member-card-wrapper">
-            <div class="card-title">🎮 VR Gaming Arena</div>
-            <div class="card-sub">OFFICIAL VIP MEMBERSHIP CARD</div>
-            <div class="card-name" id="cardNameDisplay">Member Name</div>
-            <div class="card-phone" id="cardPhoneDisplay">03000000000</div>
-            
-            <div class="qr-container">
-                <div id="qrcodeCanvas"></div>
+            <div class="card-top">
+                <span class="card-title">🎮 VR GAMING ARENA</span>
+                <span class="card-sub">VIP MEMBER</span>
             </div>
-            
-            <div class="card-footer">
-                <div>Package: <span id="cardPkgDisplay">N/A</span></div>
-                <div>Expires: <span id="cardExpiryDisplay">N/A</span></div>
+            <div class="card-body">
+                <div class="card-info">
+                    <div class="card-name" id="cardNameDisplay">Member Name</div>
+                    <div class="card-phone" id="cardPhoneDisplay">03000000000</div>
+                    <div class="card-details">
+                        <div>Pkg: <span id="cardPkgDisplay">N/A</span></div>
+                        <div>Exp: <span id="cardExpiryDisplay">N/A</span></div>
+                    </div>
+                </div>
+                <div class="qr-container">
+                    <div id="qrcodeCanvas"></div>
+                </div>
             </div>
         </div>
 
@@ -358,7 +385,7 @@
         saveData();
         renderTables();
         document.getElementById('addMemberForm').reset();
-        openCardModal(phone);
+        alert(`Member ${name} registered successfully!`);
     }
 
     function checkInMember() {
@@ -429,7 +456,6 @@
         saveData();
     }
 
-    // Live Camera QR Scanner Logic
     function openCameraScanner() {
         document.getElementById('cameraModal').style.display = 'flex';
         html5QrCode = new Html5Qrcode("qr-reader");
@@ -442,7 +468,7 @@
                 closeCameraScanner();
                 checkInMember();
             },
-            (errorMessage) => { /* scanning continuous */ }
+            (errorMessage) => { }
         ).catch(err => {
             alert("Camera Permission Error or Camera Not Found");
             closeCameraScanner();
@@ -475,8 +501,8 @@
         qrcodeContainer.innerHTML = '';
         new QRCode(qrcodeContainer, {
             text: m.phone,
-            width: 110,
-            height: 110,
+            width: 70,
+            height: 70,
             colorDark: "#000000",
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
