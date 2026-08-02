@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VR Gaming Arena - Offline & Android WhatsApp</title>
+    <title>VR Gaming Arena - Pro System</title>
 
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
@@ -13,7 +13,7 @@
         .header h1 { font-size: 18px; color: #00f0ff; text-transform: uppercase; letter-spacing: 1px; }
         .staff-tag { background: #251f3d; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1px solid #6c5ce7; color: #a29bfe; }
         
-        .dashboard { display: grid; grid-template-columns: 320px 1fr 340px; gap: 12px; min-height: calc(100vh - 60px); }
+        .dashboard { display: grid; grid-template-columns: 320px 1fr 360px; gap: 12px; min-height: calc(100vh - 60px); }
         .column { display: flex; flex-direction: column; gap: 12px; }
         
         .card { background: #151226; border: 1px solid #2a244d; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
@@ -23,7 +23,7 @@
         input, select, button { width: 100%; padding: 8px 10px; margin-top: 3px; border-radius: 5px; border: 1px solid #3c346b; background: #0b0914; color: #fff; font-size: 13px; }
         input:focus, select:focus { outline: 1px solid #00f0ff; }
         
-        button { background: #6c5ce7; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 8px; transition: 0.2s; min-height: 36px; }
+        button { background: #6c5ce7; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 8px; transition: 0.2s; min-height: 34px; }
         button:hover { background: #00f0ff; color: #000; }
         
         .status-box { padding: 10px; border-radius: 6px; font-size: 12px; display: none; margin-top: 8px; line-height: 1.4; }
@@ -32,11 +32,11 @@
         .status-warning { background: #5c4300; border: 1px solid #fdcb6e; color: #fff8e1; }
         
         .timer-btn { background: #00b894; color: #000; font-size: 12px; font-weight: bold; padding: 8px; margin-top: 6px; border-radius: 4px; width: 100%; }
-        .wa-btn { background: #25d366; color: #000; font-size: 11px; font-weight: bold; padding: 8px; margin-top: 6px; border-radius: 4px; border: none; cursor: pointer; width: 100%; }
+        .wa-btn { background: #25d366; color: #000; font-size: 11px; font-weight: bold; padding: 8px; margin-top: 6px; border: none; cursor: pointer; width: 100%; border-radius: 4px; }
 
-        .timers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+        .timers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
         .timer-card { background: #1c1833; border: 1px solid #3c346b; border-radius: 6px; padding: 10px; text-align: center; }
-        .timer-card.ending-soon { border-color: #fdcb6e; background: #2b2210; }
+        .timer-card.paused { border-color: #fdcb6e; background: #262111; }
         .timer-card.time-up { border-color: #d63031; background: #3b1111; animation: blink 1s infinite; }
         
         @keyframes blink { 50% { border-color: transparent; } }
@@ -44,17 +44,27 @@
         .timer-card .device-badge { font-size: 10px; background: #6c5ce7; color: #fff; padding: 2px 6px; border-radius: 3px; font-weight: bold; display: inline-block; margin-bottom: 4px; }
         .timer-card .name { font-size: 13px; font-weight: bold; color: #fff; }
         .timer-card .clock { font-size: 22px; font-weight: bold; color: #00f0ff; background: #090712; border-radius: 4px; padding: 4px 0; font-family: monospace; margin: 4px 0; }
+        .timer-card.paused .clock { color: #fdcb6e; }
         .timer-card.time-up .clock { color: #ff7675; }
-        .timer-stop-btn { background: #d63031; color: #fff; font-size: 10px; padding: 4px; border-radius: 3px; min-height: auto; }
+        
+        .timer-controls { display: flex; gap: 4px; margin-top: 6px; }
+        .timer-ctrl-btn { font-size: 10px; padding: 4px; border-radius: 3px; min-height: auto; flex: 1; margin-top: 0; }
+        .btn-pause { background: #fdcb6e; color: #000; }
+        .btn-resume { background: #00b894; color: #000; }
+        .btn-stop { background: #d63031; color: #fff; }
 
-        .table-wrapper { flex: 1; overflow-y: auto; max-height: 200px; margin-top: 4px; border: 1px solid #2a244d; border-radius: 4px; }
+        .table-wrapper { flex: 1; overflow-y: auto; max-height: 220px; margin-top: 4px; border: 1px solid #2a244d; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #2a244d; }
         th { background: #1c1833; color: #00f0ff; position: sticky; top: 0; }
         tr:nth-child(even) { background: #0d0b1a; }
         
+        .action-icon { cursor: pointer; margin-left: 4px; padding: 2px 4px; border-radius: 3px; font-size: 11px; }
+        .action-edit { background: #6c5ce7; color: white; }
+        .action-delete { background: #d63031; color: white; }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 8px; width: 100%; max-width: 500px; padding: 15px; }
+        .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 8px; width: 100%; max-width: 450px; padding: 15px; }
 
         @media (max-width: 900px) {
             .dashboard { grid-template-columns: 1fr; }
@@ -137,6 +147,7 @@
                             <th>Phone</th>
                             <th>Name</th>
                             <th>Expiry</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="membersTable"></tbody>
@@ -160,6 +171,23 @@
                 </table>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- EDIT MEMBER MODAL -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">✏️ Edit Member Details</h2>
+        <input type="hidden" id="editMemberPhone">
+        
+        <label>Member Name:</label>
+        <input type="text" id="editMemberName" required>
+        
+        <label>Expiry Date (YYYY-MM-DD):</label>
+        <input type="date" id="editMemberExpiry">
+
+        <button onclick="saveMemberEdit()" style="background: #00b894; color:#000;">SAVE CHANGES</button>
+        <button onclick="closeEditModal()" style="background: #d63031; margin-top: 6px;">CANCEL</button>
     </div>
 </div>
 
@@ -188,18 +216,52 @@
     function formatName(n) { return n.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); }
     function formatPhone(p) { return p.replace(/[^0-9]/g, '').trim(); }
 
-    // Format phone number specifically for Pakistan WhatsApp Android App
     function formatWhatsAppPhone(p) {
         let cleaned = formatPhone(p);
-        if (cleaned.startsWith('03')) {
-            cleaned = '92' + cleaned.substring(1);
-        }
+        if (cleaned.startsWith('03')) cleaned = '92' + cleaned.substring(1);
         return cleaned;
     }
 
-    let members = JSON.parse(localStorage.getItem('vr_members_v8')) || {};
-    let auditLogs = JSON.parse(localStorage.getItem('vr_audit_v8')) || [];
-    let activeSessions = JSON.parse(localStorage.getItem('vr_sessions_v8')) || [];
+    // Unified Permanent Storage Keys
+    const PERMANENT_MEMBERS_KEY = 'vr_arena_permanent_members';
+    const PERMANENT_AUDIT_KEY = 'vr_arena_permanent_audit';
+    const PERMANENT_SESSIONS_KEY = 'vr_arena_permanent_sessions';
+
+    // Auto Migration Function: Converts old version keys to permanent key
+    function migrateOldData() {
+        let unifiedMembers = JSON.parse(localStorage.getItem(PERMANENT_MEMBERS_KEY)) || {};
+        let unifiedAudit = JSON.parse(localStorage.getItem(PERMANENT_AUDIT_KEY)) || [];
+        let unifiedSessions = JSON.parse(localStorage.getItem(PERMANENT_SESSIONS_KEY)) || [];
+
+        const oldVersions = ['v6', 'v7', 'v8'];
+        oldVersions.forEach(v => {
+            let oldMem = JSON.parse(localStorage.getItem('vr_members_' + v));
+            if (oldMem) {
+                Object.assign(unifiedMembers, oldMem);
+                localStorage.removeItem('vr_members_' + v);
+            }
+            let oldAud = JSON.parse(localStorage.getItem('vr_audit_' + v));
+            if (oldAud) {
+                unifiedAudit = [...unifiedAudit, ...oldAud];
+                localStorage.removeItem('vr_audit_' + v);
+            }
+            let oldSess = JSON.parse(localStorage.getItem('vr_sessions_' + v));
+            if (oldSess) {
+                unifiedSessions = [...unifiedSessions, ...oldSess];
+                localStorage.removeItem('vr_sessions_' + v);
+            }
+        });
+
+        localStorage.setItem(PERMANENT_MEMBERS_KEY, JSON.stringify(unifiedMembers));
+        localStorage.setItem(PERMANENT_AUDIT_KEY, JSON.stringify(unifiedAudit));
+        localStorage.setItem(PERMANENT_SESSIONS_KEY, JSON.stringify(unifiedSessions));
+    }
+
+    migrateOldData();
+
+    let members = JSON.parse(localStorage.getItem(PERMANENT_MEMBERS_KEY)) || {};
+    let auditLogs = JSON.parse(localStorage.getItem(PERMANENT_AUDIT_KEY)) || [];
+    let activeSessions = JSON.parse(localStorage.getItem(PERMANENT_SESSIONS_KEY)) || [];
     let activeStaff = localStorage.getItem('vr_staff') || 'Counter Admin';
     let autoWaSetting = localStorage.getItem('vr_autowa') || 'disabled';
 
@@ -211,19 +273,15 @@
     renderTables();
 
     function saveData() {
-        localStorage.setItem('vr_members_v8', JSON.stringify(members));
-        localStorage.setItem('vr_audit_v8', JSON.stringify(auditLogs));
-        localStorage.setItem('vr_sessions_v8', JSON.stringify(activeSessions));
+        localStorage.setItem(PERMANENT_MEMBERS_KEY, JSON.stringify(members));
+        localStorage.setItem(PERMANENT_AUDIT_KEY, JSON.stringify(auditLogs));
+        localStorage.setItem(PERMANENT_SESSIONS_KEY, JSON.stringify(activeSessions));
     }
 
-    // Direct WhatsApp Android Protocol Trigger
     function sendWhatsAppAndroid(phone, message) {
         const targetPhone = formatWhatsAppPhone(phone);
         const encodedMsg = encodeURIComponent(message);
-        
-        // Direct intent link for Android app
-        const waUrl = `whatsapp://send?phone=${targetPhone}&text=${encodedMsg}`;
-        window.location.href = waUrl;
+        window.location.href = `whatsapp://send?phone=${targetPhone}&text=${encodedMsg}`;
     }
 
     function addAudit(action) {
@@ -253,6 +311,7 @@
         addAudit(`Registered ${name} (${phone})`);
         alert(`Member registered successfully!`);
         document.getElementById('addMemberForm').reset();
+        renderTables();
     }
 
     function checkInMember() {
@@ -290,10 +349,7 @@
                 🚨 <b>MEMBERSHIP EXPIRED</b><br>Name: ${m.name}<br>Ended On: ${m.expiryDate}<br>
                 <button onclick="sendWhatsAppAndroid('${m.phone}', '${waMsg}')" class="wa-btn">📲 OPEN WHATSAPP RENEWAL ALERT</button>
             `;
-            
-            if (autoWaSetting === 'enabled') {
-                sendWhatsAppAndroid(m.phone, waMsg);
-            }
+            if (autoWaSetting === 'enabled') sendWhatsAppAndroid(m.phone, waMsg);
             addAudit(`Check-in Failed (Expired): ${m.name}`);
         } else {
             const waMsg = `Hi ${m.name}, welcome to VR Gaming Arena! Your session limit is ${m.minutes} mins. Package valid until ${m.expiryDate}.`;
@@ -310,10 +366,7 @@
                 <button class="timer-btn" onclick="startSession('${m.phone}')">▶ START SESSION (${m.minutes} MINS)</button>
                 <button onclick="sendWhatsAppAndroid('${m.phone}', '${waMsg}')" class="wa-btn">📲 SEND WHATSAPP MESSAGE</button>
             `;
-            
-            if (autoWaSetting === 'enabled') {
-                sendWhatsAppAndroid(m.phone, waMsg);
-            }
+            if (autoWaSetting === 'enabled') sendWhatsAppAndroid(m.phone, waMsg);
             addAudit(`Checked-in: ${m.name}`);
         }
         saveData();
@@ -325,10 +378,28 @@
         const endTime = Date.now() + (m.minutes * 60 * 1000);
 
         activeSessions = activeSessions.filter(s => s.phone !== phone);
-        activeSessions.push({ phone: m.phone, name: m.name, device: device, endTime: endTime });
+        activeSessions.push({ phone: m.phone, name: m.name, device: device, endTime: endTime, isPaused: false, remainingMs: 0 });
 
         addAudit(`Started ${device} for ${m.name}`);
         document.getElementById('statusResult').style.display = 'none';
+        saveData();
+        updateTimersDisplay();
+    }
+
+    function togglePauseSession(phone) {
+        let s = activeSessions.find(session => session.phone === phone);
+        if (!s) return;
+
+        const now = Date.now();
+        if (s.isPaused) {
+            s.endTime = now + s.remainingMs;
+            s.isPaused = false;
+            addAudit(`Resumed ${s.device} timer for ${s.name}`);
+        } else {
+            s.remainingMs = Math.max(0, s.endTime - now);
+            s.isPaused = true;
+            addAudit(`Paused ${s.device} timer for ${s.name}`);
+        }
         saveData();
         updateTimersDisplay();
     }
@@ -353,23 +424,67 @@
         const now = Date.now();
 
         activeSessions.forEach(s => {
-            const diff = Math.max(0, Math.floor((s.endTime - now) / 1000));
+            let diff = s.isPaused ? Math.floor(s.remainingMs / 1000) : Math.max(0, Math.floor((s.endTime - now) / 1000));
             const mins = Math.floor(diff / 60);
             const secs = diff % 60;
             const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-            let stateClass = diff === 0 ? 'time-up' : (mins < 5 ? 'ending-soon' : '');
+            let stateClass = s.isPaused ? 'paused' : (diff === 0 ? 'time-up' : '');
 
             html += `
                 <div class="timer-card ${stateClass}">
                     <span class="device-badge">${s.device}</span>
                     <div class="name">${s.name}</div>
                     <div class="clock">${diff === 0 ? 'TIME UP!' : timeString}</div>
-                    <button class="timer-stop-btn" onclick="stopSession('${s.phone}')">END SESSION</button>
+                    <div class="timer-controls">
+                        <button class="timer-ctrl-btn ${s.isPaused ? 'btn-resume' : 'btn-pause'}" onclick="togglePauseSession('${s.phone}')">
+                            ${s.isPaused ? '▶ RESUME' : '⏸ PAUSE'}
+                        </button>
+                        <button class="timer-ctrl-btn btn-stop" onclick="stopSession('${s.phone}')">STOP</button>
+                    </div>
                 </div>
             `;
         });
         grid.innerHTML = html;
+    }
+
+    function openEditModal(phone) {
+        const m = members[phone];
+        if (!m) return;
+        document.getElementById('editMemberPhone').value = phone;
+        document.getElementById('editMemberName').value = m.name;
+        document.getElementById('editMemberExpiry').value = m.expiryDate || '';
+        document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+
+    function saveMemberEdit() {
+        const phone = document.getElementById('editMemberPhone').value;
+        const newName = formatName(document.getElementById('editMemberName').value);
+        const newExpiry = document.getElementById('editMemberExpiry').value;
+
+        if (members[phone]) {
+            members[phone].name = newName;
+            members[phone].expiryDate = newExpiry;
+            addAudit(`Updated details for ${newName} (${phone})`);
+            saveData();
+            renderTables();
+            closeEditModal();
+        }
+    }
+
+    function deleteMember(phone) {
+        const m = members[phone];
+        if (!m) return;
+        if (confirm(`Are you sure you want to delete member: ${m.name} (${phone})?`)) {
+            delete members[phone];
+            activeSessions = activeSessions.filter(s => s.phone !== phone);
+            addAudit(`Deleted member ${m.name} (${phone})`);
+            saveData();
+            renderTables();
+            updateTimersDisplay();
+        }
     }
 
     function renderTables() {
@@ -379,7 +494,16 @@
         membersTbody.innerHTML = '';
         for (let p in members) {
             let m = members[p];
-            membersTbody.innerHTML += `<tr><td><b>${m.phone}</b></td><td>${m.name}</td><td>${m.expiryDate || 'N/A'}</td></tr>`;
+            membersTbody.innerHTML += `
+                <tr>
+                    <td><b>${m.phone}</b></td>
+                    <td>${m.name}</td>
+                    <td>${m.expiryDate || 'N/A'}</td>
+                    <td>
+                        <span class="action-icon action-edit" onclick="openEditModal('${m.phone}')">✏️</span>
+                        <span class="action-icon action-delete" onclick="deleteMember('${m.phone}')">🗑️</span>
+                    </td>
+                </tr>`;
         }
 
         auditTbody.innerHTML = '';
