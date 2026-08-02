@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VR Gaming Arena - Live Cloud Sync</title>
+
+    <!-- Firebase Cloud Sync Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+        body { background-color: #0b0914; color: #ffffff; padding: 10px; min-height: 100vh; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a244d; padding-bottom: 8px; margin-bottom: 12px; }
+        .header h1 { font-size: 18px; color: #00f0ff; text-transform: uppercase; letter-spacing: 1px; }
+        .staff-tag { background: #251f3d; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1px solid #6c5ce7; color: #a29bfe; }
+        
+        .dashboard { display: grid; grid-template-columns: 320px 1fr 340px; gap: 12px; min-height: calc(100vh - 60px); }
+        .column { display: flex; flex-direction: column; gap: 12px; }
+        
+        .card { background: #151226; border: 1px solid #2a244d; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
+        .card h2 { font-size: 13px; color: #a29bfe; margin-bottom: 8px; border-bottom: 1px solid #2a244d; padding-bottom: 4px; text-transform: uppercase; display: flex; justify-content: space-between; }
+        
+        label { font-size: 11px; color: #8c82c2; font-weight: bold; margin-top: 6px; display: block; }
+        input, select, button { width: 100%; padding: 8px 10px; margin-top: 3px; border-radius: 5px; border: 1px solid #3c346b; background: #0b0914; color: #fff; font-size: 13px; }
+        input:focus, select:focus { outline: 1px solid #00f0ff; }
+        
+        button { background: #6c5ce7; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 8px; transition: 0.2s; min-height: 36px; }
+        button:hover { background: #00f0ff; color: #000; }
+        
+        .status-box { padding: 10px; border-radius: 6px; font-size: 12px; display: none; margin-top: 8px; line-height: 1.4; }
+        .status-success { background: #004d40; border: 1px solid #00b894; color: #e0f2f1; }
+        .status-expired { background: #4a0e0e; border: 1px solid #d63031; color: #ffebee; }
+        .status-warning { background: #5c4300; border: 1px solid #fdcb6e; color: #fff8e1; }
+        
+        .timer-btn { background: #00b894; color: #000; font-size: 12px; font-weight: bold; padding: 8px; margin-top: 6px; border-radius: 4px; width: 100%; }
+        .wa-btn { background: #25d366; color: #000; font-size: 11px; font-weight: bold; padding: 6px; margin-top: 5px; border-radius: 4px; text-decoration: none; display: inline-block; text-align: center; }
+
+        .timers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+        .timer-card { background: #1c1833; border: 1px solid #3c346b; border-radius: 6px; padding: 10px; text-align: center; }
+        .timer-card.ending-soon { border-color: #fdcb6e; background: #2b2210; }
+        .timer-card.time-up { border-color: #d63031; background: #3b1111; animation: blink 1s infinite; }
+        
+        @keyframes blink { 50% { border-color: transparent; } }
+
+        .timer-card .device-badge { font-size: 10px; background: #6c5ce7; color: #fff; padding: 2px 6px; border-radius: 3px; font-weight: bold; display: inline-block; margin-bottom: 4px; }
+        .timer-card .name { font-size: 13px; font-weight: bold; color: #fff; }
+        .timer-card .clock { font-size: 22px; font-weight: bold; color: #00f0ff; background: #090712; border-radius: 4px; padding: 4px 0; font-family: monospace; margin: 4px 0; }
+        .timer-card.time-up .clock { color: #ff7675; }
+        .timer-stop-btn { background: #d63031; color: #fff; font-size: 10px; padding: 4px; border-radius: 3px; min-height: auto; }
+
+        .table-wrapper { flex: 1; overflow-y: auto; max-height: 200px; margin-top: 4px; border: 1px solid #2a244d; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #2a244d; }
+        th { background: #1c1833; color: #00f0ff; position: sticky; top: 0; }
+        tr:nth-child(even) { background: #0d0b1a; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
+        .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 8px; width: 100%; max-width: 500px; padding: 15px; }
+
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+            body { padding: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🎮 VR Gaming Arena</h1>
+    <div style="display: flex; gap: 8px; align-items: center;">
+        <span class="staff-tag" id="currentStaffBadge">Staff: Counter Admin</span>
+        <button onclick="openSettingsModal()" style="width: auto; margin: 0; padding: 4px 10px; font-size: 11px; background: #251f3d; border: 1px solid #3c346b;">⚙️ Settings</button>
+    </div>
+</div>
+
+<div class="dashboard">
+    <!-- LEFT COLUMN -->
+    <div class="column">
+        <!-- CHECK-IN -->
+        <div class="card">
+            <h2>⚡ Member Check-In</h2>
+            <form onsubmit="event.preventDefault(); checkInMember();">
+                <label>Phone Number (Member ID):</label>
+                <div style="display: flex; gap: 6px;">
+                    <input type="tel" id="checkInPhone" placeholder="03001234567" autofocus required>
+                    <button type="submit" style="width: 80px; margin-top: 3px; background: #00f0ff; color: #000;">VERIFY</button>
+                </div>
+            </form>
+            <div id="statusResult" class="status-box"></div>
+        </div>
+
+        <!-- NEW MEMBER -->
+        <div class="card">
+            <h2>➕ Register New Member</h2>
+            <form id="addMemberForm" onsubmit="event.preventDefault(); registerMember();">
+                <label>Member Name:</label>
+                <input type="text" id="memberName" placeholder="e.g. Shamis Shakeel" required>
+                
+                <label>Phone Number:</label>
+                <input type="tel" id="memberPhone" placeholder="03001234567" required>
+
+                <label>Select Package:</label>
+                <select id="packageSelect" required>
+                    <option value="">-- Choose Package --</option>
+                    <option value="15 Days - 20 Mins (Rs 2500)|15|20">15 Days — 20 Mins/visit (Rs 2500)</option>
+                    <option value="15 Days - 40 Mins (Rs 3500)|15|40">15 Days — 40 Mins/visit (Rs 3500)</option>
+                    <option value="15 Days - 1 Hour (Rs 4500)|15|60">15 Days — 1 Hour/visit (Rs 4500)</option>
+                    <option value="30 Days - 20 Mins (Rs 4000)|30|20">30 Days — 20 Mins/visit (Rs 4000)</option>
+                    <option value="30 Days - 30 Mins (Rs 4500)|30|30">30 Days — 30 Mins/visit (Rs 4500)</option>
+                    <option value="30 Days - 1 Hour (Rs 5500)|30|60">30 Days — 1 Hour/visit (Rs 5500)</option>
+                </select>
+
+                <button type="submit">SAVE MEMBER</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MIDDLE COLUMN -->
+    <div class="column">
+        <div class="card" style="min-height: 350px;">
+            <h2>
+                <span>⏱️ Live Gaming Timers</span>
+                <span id="activeCount" style="color: #00f0ff; font-size: 11px;">0 Active</span>
+            </h2>
+            <div id="timersGrid" class="timers-container"></div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="column">
+        <!-- MEMBERS DATABASE -->
+        <div class="card">
+            <h2>📋 Members Database</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Phone</th>
+                            <th>Name</th>
+                            <th>Expiry</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SHIFT AUDIT LOG -->
+        <div class="card">
+            <h2>📝 Staff Shift Audit Log</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Staff</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">⚙️ Cloud & System Settings</h2>
+        
+        <label>Active Staff Name:</label>
+        <input type="text" id="staffNameInput" value="Counter Admin" placeholder="e.g. Cashier 1">
+        <button onclick="updateStaff()" style="background: #251f3d; border: 1px solid #6c5ce7;">UPDATE STAFF</button>
+        
+        <hr style="border-color: #2a244d; margin: 12px 0;">
+
+        <label>Cloud Sync Key (Must match on all devices):</label>
+        <input type="text" id="syncKeyInput" placeholder="e.g. vrarena-karachi-123">
+        <button onclick="connectCloud()" style="background: #00b894; color:#000;">CONNECT LIVE SYNC</button>
+        <div id="syncStatus" style="font-size: 11px; margin-top: 6px; color: #55efc4; text-align: center;"></div>
+
+        <button onclick="closeSettingsModal()" style="background: #d63031; margin-top: 15px;">CLOSE SETTINGS</button>
+    </div>
+</div>
+
+<script>
+    // Free Public Cloud Database Config
+    const firebaseConfig = {
+        databaseURL: "https://vr-arena-default-rtdb.firebaseio.com"
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    function formatName(n) { return n.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); }
+    function formatPhone(p) { return p.replace(/[^0-9]/g, '').trim(); }
+
+    let members = JSON.parse(localStorage.getItem('vr_members_v7')) || {};
+    let auditLogs = JSON.parse(localStorage.getItem('vr_audit_v7')) || [];
+    let activeSessions = JSON.parse(localStorage.getItem('vr_sessions_v7')) || [];
+    let activeStaff = localStorage.getItem('vr_staff') || 'Counter Admin';
+    let syncKey = localStorage.getItem('vr_sync_key') || 'vr-arena-default';
+
+    document.getElementById('currentStaffBadge').innerText = `Staff: ${activeStaff}`;
+    document.getElementById('staffNameInput').value = activeStaff;
+    document.getElementById('syncKeyInput').value = syncKey;
+
+    setInterval(updateTimersDisplay, 1000);
+    renderTables();
+    listenToCloud();
+
+    function saveData() {
+        localStorage.setItem('vr_members_v7', JSON.stringify(members));
+        localStorage.setItem('vr_audit_v7', JSON.stringify(auditLogs));
+        localStorage.setItem('vr_sessions_v7', JSON.stringify(activeSessions));
+        
+        if (syncKey) {
+            db.ref('arenas/' + syncKey).set({
+                members: members,
+                auditLogs: auditLogs,
+                activeSessions: activeSessions
+            });
+        }
+    }
+
+    function listenToCloud() {
+        if (!syncKey) return;
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.innerText = "Connecting to Live Cloud...";
+
+        db.ref('arenas/' + syncKey).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                members = data.members || {};
+                auditLogs = data.auditLogs || [];
+                activeSessions = data.activeSessions || [];
+
+                localStorage.setItem('vr_members_v7', JSON.stringify(members));
+                localStorage.setItem('vr_audit_v7', JSON.stringify(auditLogs));
+                localStorage.setItem('vr_sessions_v7', JSON.stringify(activeSessions));
+
+                renderTables();
+                updateTimersDisplay();
+                statusEl.innerText = "✓ Connected Live & Synced Across All Devices!";
+            } else {
+                statusEl.innerText = "✓ Sync Key Set! Ready to stream data.";
+            }
+        });
+    }
+
+    function connectCloud() {
+        syncKey = document.getElementById('syncKeyInput').value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!syncKey) return alert('Please enter a valid Sync Key');
+        
+        localStorage.setItem('vr_sync_key', syncKey);
+        saveData();
+        listenToCloud();
+        alert('Sync Key Saved! Devices using this key will now share live data.');
+    }
+
+    function addAudit(action) {
+        auditLogs.unshift({
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            staff: activeStaff,
+            action: action
+        });
+        saveData();
+        renderTables();
+    }
+
+    function registerMember() {
+        const name = formatName(document.getElementById('memberName').value);
+        const phone = formatPhone(document.getElementById('memberPhone').value);
+        const packageVal = document.getElementById('packageSelect').value;
+
+        if (!packageVal || !phone || !name) return;
+        const [pkgName, days, minutes] = packageVal.split('|');
+
+        members[phone] = {
+            phone: phone, name: name, packageName: pkgName,
+            days: parseInt(days), minutes: parseInt(minutes),
+            joiningDate: null, expiryDate: null, status: 'Pending First Visit'
+        };
+
+        addAudit(`Registered ${name} (${phone})`);
+        alert(`Member registered successfully!`);
+        document.getElementById('addMemberForm').reset();
+    }
+
+    function checkInMember() {
+        const phone = formatPhone(document.getElementById('checkInPhone').value);
+        const resultBox = document.getElementById('statusResult');
+        resultBox.style.display = 'block';
+
+        if (!members[phone]) {
+            resultBox.className = 'status-box status-warning';
+            resultBox.innerHTML = '❌ <b>MEMBER NOT FOUND</b>';
+            return;
+        }
+
+        let m = members[phone];
+        const today = new Date();
+        const currentDateStr = today.toISOString().split('T')[0];
+
+        if (!m.joiningDate) {
+            const expiry = new Date();
+            expiry.setDate(today.getDate() + m.days);
+            m.joiningDate = currentDateStr;
+            m.expiryDate = expiry.toISOString().split('T')[0];
+            m.status = 'Active';
+        }
+
+        const expDate = new Date(m.expiryDate);
+        today.setHours(0,0,0,0); expDate.setHours(0,0,0,0);
+
+        if (today > expDate) {
+            m.status = 'Expired';
+            const waMsg = encodeURIComponent(`Hi ${m.name}, your membership at VR Gaming Arena expired on ${m.expiryDate}. Visit us to renew!`);
+            resultBox.className = 'status-box status-expired';
+            resultBox.innerHTML = `
+                🚨 <b>MEMBERSHIP EXPIRED</b><br>Name: ${m.name}<br>Ended On: ${m.expiryDate}<br>
+                <a href="https://wa.me/${m.phone}?text=${waMsg}" target="_blank" class="wa-btn">📲 Send WA Renewal Alert</a>
+            `;
+            addAudit(`Check-in Failed (Expired): ${m.name}`);
+        } else {
+            const waMsg = encodeURIComponent(`Hi ${m.name}, welcome to VR Gaming Arena! Your session limit is ${m.minutes} mins. Package valid until ${m.expiryDate}.`);
+            resultBox.className = 'status-box status-success';
+            resultBox.innerHTML = `
+                <b>✅ ACCESS GRANTED</b><br>Name: ${m.name} | Expires: ${m.expiryDate}<br>
+                <label>Assign Device / Station:</label>
+                <select id="deviceSelect" style="margin-bottom: 6px;">
+                    <option value="VR Station">🎮 VR Station</option>
+                    <option value="PS4 Console">⚽ PS4 Console</option>
+                    <option value="Car Simulator">🏎️ Car Simulator</option>
+                </select>
+                <button class="timer-btn" onclick="startSession('${m.phone}')">▶ START SESSION (${m.minutes} MINS)</button>
+                <a href="https://wa.me/${m.phone}?text=${waMsg}" target="_blank" class="wa-btn">📲 Send WA Welcome Note</a>
+            `;
+            addAudit(`Checked-in: ${m.name}`);
+        }
+        saveData();
+    }
+
+    function startSession(phone) {
+        const m = members[phone];
+        const device = document.getElementById('deviceSelect').value;
+        const endTime = Date.now() + (m.minutes * 60 * 1000);
+
+        activeSessions = activeSessions.filter(s => s.phone !== phone);
+        activeSessions.push({ phone: m.phone, name: m.name, device: device, endTime: endTime });
+
+        addAudit(`Started ${device} for ${m.name}`);
+        document.getElementById('statusResult').style.display = 'none';
+        saveData();
+        updateTimersDisplay();
+    }
+
+    function stopSession(phone) {
+        activeSessions = activeSessions.filter(s => s.phone !== phone);
+        saveData();
+        updateTimersDisplay();
+    }
+
+    function updateTimersDisplay() {
+        const grid = document.getElementById('timersGrid');
+        document.getElementById('activeCount').innerText = `${activeSessions.length} Active`;
+
+        if (activeSessions.length === 0) {
+            grid.innerHTML = '<div style="color:#6c5ce7; grid-column:1/-1; text-align:center; padding:30px;">No members currently playing</div>';
+            return;
+        }
+
+        activeSessions.sort((a, b) => a.endTime - b.endTime);
+        let html = '';
+        const now = Date.now();
+
+        activeSessions.forEach(s => {
+            const diff = Math.max(0, Math.floor((s.endTime - now) / 1000));
+            const mins = Math.floor(diff / 60);
+            const secs = diff % 60;
+            const timeString = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            let stateClass = diff === 0 ? 'time-up' : (mins < 5 ? 'ending-soon' : '');
+
+            html += `
+                <div class="timer-card ${stateClass}">
+                    <span class="device-badge">${s.device}</span>
+                    <div class="name">${s.name}</div>
+                    <div class="clock">${diff === 0 ? 'TIME UP!' : timeString}</div>
+                    <button class="timer-stop-btn" onclick="stopSession('${s.phone}')">END SESSION</button>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+    }
+
+    function renderTables() {
+        const membersTbody = document.getElementById('membersTable');
+        const auditTbody = document.getElementById('auditTable');
+
+        membersTbody.innerHTML = '';
+        for (let p in members) {
+            let m = members[p];
+            membersTbody.innerHTML += `<tr><td><b>${m.phone}</b></td><td>${m.name}</td><td>${m.expiryDate || 'N/A'}</td></tr>`;
+        }
+
+        auditTbody.innerHTML = '';
+        auditLogs.slice(0, 10).forEach(a => {
+            auditTbody.innerHTML += `<tr><td>${a.time}</td><td><b>${a.staff}</b></td><td>${a.action}</td></tr>`;
+        });
+    }
+
+    function openSettingsModal() { document.getElementById('settingsModal').style.display = 'flex'; }
+    function closeSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
+
+    function updateStaff() {
+        activeStaff = document.getElementById('staffNameInput').value.trim() || 'Counter Admin';
+        localStorage.setItem('vr_staff', activeStaff);
+        document.getElementById('currentStaffBadge').innerText = `Staff: ${activeStaff}`;
+        alert('Staff Updated!');
+    }
+</script>
+
+</body>
+</html>
