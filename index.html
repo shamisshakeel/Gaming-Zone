@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VR Gaming Arena - Pro System</title>
+    <title>VR Gaming Arena - QR & Card Printing</title>
+
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
@@ -13,7 +16,7 @@
         .header h1 { font-size: 18px; color: #00f0ff; text-transform: uppercase; letter-spacing: 1px; }
         .staff-tag { background: #251f3d; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1px solid #6c5ce7; color: #a29bfe; }
         
-        .dashboard { display: grid; grid-template-columns: 320px 1fr 360px; gap: 12px; min-height: calc(100vh - 60px); }
+        .dashboard { display: grid; grid-template-columns: 320px 1fr 380px; gap: 12px; min-height: calc(100vh - 60px); }
         .column { display: flex; flex-direction: column; gap: 12px; }
         
         .card { background: #151226; border: 1px solid #2a244d; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
@@ -59,12 +62,41 @@
         th { background: #1c1833; color: #00f0ff; position: sticky; top: 0; }
         tr:nth-child(even) { background: #0d0b1a; }
         
-        .action-icon { cursor: pointer; margin-left: 4px; padding: 2px 4px; border-radius: 3px; font-size: 11px; }
+        .action-icon { cursor: pointer; margin-left: 2px; padding: 2px 4px; border-radius: 3px; font-size: 10px; }
+        .action-card { background: #00b894; color: #000; font-weight: bold; }
         .action-edit { background: #6c5ce7; color: white; }
         .action-delete { background: #d63031; color: white; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
         .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 8px; width: 100%; max-width: 450px; padding: 15px; }
+
+        /* PRINTABLE CARD STYLING */
+        .member-card-wrapper {
+            background: linear-gradient(135deg, #090712 0%, #1c1833 100%);
+            border: 2px solid #00f0ff;
+            border-radius: 12px;
+            padding: 16px;
+            color: #fff;
+            width: 320px;
+            margin: 10px auto;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            text-align: center;
+        }
+        .member-card-wrapper .card-title { font-size: 14px; font-weight: bold; color: #00f0ff; text-transform: uppercase; letter-spacing: 1px; }
+        .member-card-wrapper .card-sub { font-size: 9px; color: #a29bfe; margin-bottom: 12px; }
+        .member-card-wrapper .card-name { font-size: 16px; font-weight: bold; color: #fff; margin-top: 4px; }
+        .member-card-wrapper .card-phone { font-size: 12px; color: #fdcb6e; margin-bottom: 8px; }
+        .member-card-wrapper .qr-container { background: #fff; padding: 8px; border-radius: 8px; display: inline-block; margin: 8px 0; }
+        .member-card-wrapper .card-footer { font-size: 10px; color: #8c82c2; margin-top: 6px; }
+
+        /* PRINT MEDIA RULE: PRINTS ONLY THE CARD */
+        @media print {
+            body * { visibility: hidden; }
+            #printableCard, #printableCard * { visibility: visible; }
+            #printableCard { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none; border: 2px solid #000; background: #fff !important; color: #000 !important; }
+            #printableCard .card-title, #printableCard .card-name { color: #000 !important; }
+            #printableCard .card-sub, #printableCard .card-phone, #printableCard .card-footer { color: #333 !important; }
+        }
 
         @media (max-width: 900px) {
             .dashboard { grid-template-columns: 1fr; }
@@ -85,13 +117,13 @@
 <div class="dashboard">
     <!-- LEFT COLUMN -->
     <div class="column">
-        <!-- CHECK-IN -->
+        <!-- CHECK-IN / SCANNER -->
         <div class="card">
-            <h2>⚡ Member Check-In</h2>
+            <h2>⚡ Member Scan & Check-In</h2>
             <form onsubmit="event.preventDefault(); checkInMember();">
-                <label>Phone Number (Member ID):</label>
+                <label>Scan QR / Phone Number:</label>
                 <div style="display: flex; gap: 6px;">
-                    <input type="tel" id="checkInPhone" placeholder="03001234567" autofocus required>
+                    <input type="tel" id="checkInPhone" placeholder="Scan QR or enter 03001234567" autofocus required>
                     <button type="submit" style="width: 80px; margin-top: 3px; background: #00f0ff; color: #000;">VERIFY</button>
                 </div>
             </form>
@@ -119,7 +151,7 @@
                     <option value="30 Days - 1 Hour (Rs 5500)|30|60">30 Days — 1 Hour/visit (Rs 5500)</option>
                 </select>
 
-                <button type="submit">SAVE MEMBER</button>
+                <button type="submit">SAVE & GENERATE CARD</button>
             </form>
         </div>
     </div>
@@ -174,6 +206,32 @@
     </div>
 </div>
 
+<!-- CARD PRINT MODAL -->
+<div id="cardModal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">📇 Member Digital Card</h2>
+        
+        <div id="printableCard" class="member-card-wrapper">
+            <div class="card-title">🎮 VR Gaming Arena</div>
+            <div class="card-sub">OFFICIAL VIP MEMBERSHIP CARD</div>
+            <div class="card-name" id="cardNameDisplay">Member Name</div>
+            <div class="card-phone" id="cardPhoneDisplay">03000000000</div>
+            
+            <div class="qr-container">
+                <div id="qrcodeCanvas"></div>
+            </div>
+            
+            <div class="card-footer">
+                <div>Package: <span id="cardPkgDisplay">N/A</span></div>
+                <div>Expires: <span id="cardExpiryDisplay">N/A</span></div>
+            </div>
+        </div>
+
+        <button onclick="window.print()" style="background: #00b894; color:#000;">🖨️ PRINT MEMBER CARD</button>
+        <button onclick="closeCardModal()" style="background: #d63031; margin-top: 6px;">CLOSE</button>
+    </div>
+</div>
+
 <!-- EDIT MEMBER MODAL -->
 <div id="editModal" class="modal">
     <div class="modal-content">
@@ -222,42 +280,9 @@
         return cleaned;
     }
 
-    // Unified Permanent Storage Keys
     const PERMANENT_MEMBERS_KEY = 'vr_arena_permanent_members';
     const PERMANENT_AUDIT_KEY = 'vr_arena_permanent_audit';
     const PERMANENT_SESSIONS_KEY = 'vr_arena_permanent_sessions';
-
-    // Auto Migration Function: Converts old version keys to permanent key
-    function migrateOldData() {
-        let unifiedMembers = JSON.parse(localStorage.getItem(PERMANENT_MEMBERS_KEY)) || {};
-        let unifiedAudit = JSON.parse(localStorage.getItem(PERMANENT_AUDIT_KEY)) || [];
-        let unifiedSessions = JSON.parse(localStorage.getItem(PERMANENT_SESSIONS_KEY)) || [];
-
-        const oldVersions = ['v6', 'v7', 'v8'];
-        oldVersions.forEach(v => {
-            let oldMem = JSON.parse(localStorage.getItem('vr_members_' + v));
-            if (oldMem) {
-                Object.assign(unifiedMembers, oldMem);
-                localStorage.removeItem('vr_members_' + v);
-            }
-            let oldAud = JSON.parse(localStorage.getItem('vr_audit_' + v));
-            if (oldAud) {
-                unifiedAudit = [...unifiedAudit, ...oldAud];
-                localStorage.removeItem('vr_audit_' + v);
-            }
-            let oldSess = JSON.parse(localStorage.getItem('vr_sessions_' + v));
-            if (oldSess) {
-                unifiedSessions = [...unifiedSessions, ...oldSess];
-                localStorage.removeItem('vr_sessions_' + v);
-            }
-        });
-
-        localStorage.setItem(PERMANENT_MEMBERS_KEY, JSON.stringify(unifiedMembers));
-        localStorage.setItem(PERMANENT_AUDIT_KEY, JSON.stringify(unifiedAudit));
-        localStorage.setItem(PERMANENT_SESSIONS_KEY, JSON.stringify(unifiedSessions));
-    }
-
-    migrateOldData();
 
     let members = JSON.parse(localStorage.getItem(PERMANENT_MEMBERS_KEY)) || {};
     let auditLogs = JSON.parse(localStorage.getItem(PERMANENT_AUDIT_KEY)) || [];
@@ -309,19 +334,21 @@
         };
 
         addAudit(`Registered ${name} (${phone})`);
-        alert(`Member registered successfully!`);
-        document.getElementById('addMemberForm').reset();
+        saveData();
         renderTables();
+        document.getElementById('addMemberForm').reset();
+        openCardModal(phone);
     }
 
     function checkInMember() {
-        const phone = formatPhone(document.getElementById('checkInPhone').value);
+        const rawInput = document.getElementById('checkInPhone').value;
+        const phone = formatPhone(rawInput);
         const resultBox = document.getElementById('statusResult');
         resultBox.style.display = 'block';
 
         if (!members[phone]) {
             resultBox.className = 'status-box status-warning';
-            resultBox.innerHTML = '❌ <b>MEMBER NOT FOUND</b>';
+            resultBox.innerHTML = '❌ <b>MEMBER NOT FOUND OR UNVERIFIED</b>';
             return;
         }
 
@@ -346,17 +373,25 @@
             
             resultBox.className = 'status-box status-expired';
             resultBox.innerHTML = `
-                🚨 <b>MEMBERSHIP EXPIRED</b><br>Name: ${m.name}<br>Ended On: ${m.expiryDate}<br>
-                <button onclick="sendWhatsAppAndroid('${m.phone}', '${waMsg}')" class="wa-btn">📲 OPEN WHATSAPP RENEWAL ALERT</button>
+                🚨 <b>VERIFIED: MEMBERSHIP EXPIRED</b><br>
+                Name: <b>${m.name}</b><br>
+                Phone: ${m.phone}<br>
+                Package: ${m.packageName}<br>
+                Ended On: ${m.expiryDate}<br>
+                <button onclick="sendWhatsAppAndroid('${m.phone}', '${waMsg}')" class="wa-btn">📲 RENEWAL ALERT WHATSAPP</button>
             `;
             if (autoWaSetting === 'enabled') sendWhatsAppAndroid(m.phone, waMsg);
-            addAudit(`Check-in Failed (Expired): ${m.name}`);
+            addAudit(`Scan Check-in Failed (Expired): ${m.name}`);
         } else {
             const waMsg = `Hi ${m.name}, welcome to VR Gaming Arena! Your session limit is ${m.minutes} mins. Package valid until ${m.expiryDate}.`;
             
             resultBox.className = 'status-box status-success';
             resultBox.innerHTML = `
-                <b>✅ ACCESS GRANTED</b><br>Name: ${m.name} | Expires: ${m.expiryDate}<br>
+                ✅ <b>VERIFIED MEMBER DETECTED</b><br>
+                Name: <b>${m.name}</b><br>
+                Phone: ${m.phone}<br>
+                Package: ${m.packageName}<br>
+                Expiry Date: <b>${m.expiryDate}</b><br>
                 <label>Assign Device / Station:</label>
                 <select id="deviceSelect" style="margin-bottom: 6px;">
                     <option value="VR Station">🎮 VR Station</option>
@@ -367,10 +402,36 @@
                 <button onclick="sendWhatsAppAndroid('${m.phone}', '${waMsg}')" class="wa-btn">📲 SEND WHATSAPP MESSAGE</button>
             `;
             if (autoWaSetting === 'enabled') sendWhatsAppAndroid(m.phone, waMsg);
-            addAudit(`Checked-in: ${m.name}`);
+            addAudit(`Verified Check-in: ${m.name}`);
         }
+        document.getElementById('checkInPhone').value = '';
         saveData();
     }
+
+    function openCardModal(phone) {
+        const m = members[phone];
+        if (!m) return;
+
+        document.getElementById('cardNameDisplay').innerText = m.name;
+        document.getElementById('cardPhoneDisplay').innerText = m.phone;
+        document.getElementById('cardPkgDisplay').innerText = m.packageName;
+        document.getElementById('cardExpiryDisplay').innerText = m.expiryDate || 'Activates On First Visit';
+
+        const qrcodeContainer = document.getElementById('qrcodeCanvas');
+        qrcodeContainer.innerHTML = '';
+        new QRCode(qrcodeContainer, {
+            text: m.phone,
+            width: 110,
+            height: 110,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        document.getElementById('cardModal').style.display = 'flex';
+    }
+
+    function closeCardModal() { document.getElementById('cardModal').style.display = 'none'; }
 
     function startSession(phone) {
         const m = members[phone];
@@ -500,6 +561,7 @@
                     <td>${m.name}</td>
                     <td>${m.expiryDate || 'N/A'}</td>
                     <td>
+                        <span class="action-icon action-card" onclick="openCardModal('${m.phone}')">📇</span>
                         <span class="action-icon action-edit" onclick="openEditModal('${m.phone}')">✏️</span>
                         <span class="action-icon action-delete" onclick="deleteMember('${m.phone}')">🗑️</span>
                     </td>
