@@ -66,7 +66,6 @@
         th { background: #1c1833; color: #00f0ff; position: sticky; top: 0; z-index: 10; }
         tr:nth-child(even) { background: #0d0b1a; }
         
-        /* TOUCH-FRIENDLY ACTION BUTTONS */
         .action-group { display: flex; gap: 4px; flex-wrap: nowrap; }
         .action-btn { cursor: pointer; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; min-height: 32px; width: auto; margin: 0; border: none; display: inline-flex; align-items: center; justify-content: center; }
         .action-card { background: #00b894; color: #000; }
@@ -76,7 +75,6 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 12px; }
         .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 12px; width: 100%; max-width: 450px; padding: 16px; max-height: 90vh; overflow-y: auto; }
 
-        /* DEBIT CARD SIZE STYLING (Standard CR80 Ratio: 325px x 204px) */
         .member-card-wrapper {
             background: linear-gradient(135deg, #090712 0%, #1c1833 100%);
             border: 2px solid #00f0ff;
@@ -103,11 +101,9 @@
         .card-details { font-size: 9px; color: #a29bfe; line-height: 1.3; }
         .qr-container { background: #fff; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
-        /* CAMERA READER STYLING */
         #qr-reader { width: 100%; border: 2px solid #00f0ff; border-radius: 8px; overflow: hidden; background: #000; }
         #qr-reader video { width: 100% !important; border-radius: 6px; }
 
-        /* PRINT MEDIA RULE: PRINTS EXACT DEBIT CARD SIZE */
         @media print {
             body * { visibility: hidden; }
             #printableCard, #printableCard * { visibility: visible; }
@@ -130,7 +126,6 @@
             #printableCard .card-phone, #printableCard .card-details { color: #333 !important; }
         }
 
-        /* MOBILE & TABLET LAYOUT RESPONSIVENESS */
         @media (max-width: 980px) {
             .dashboard { grid-template-columns: 1fr; }
             body { padding: 8px; }
@@ -144,8 +139,9 @@
 
 <div class="header">
     <h1>🎮 VR Gaming Arena</h1>
-    <div style="display: flex; gap: 8px; align-items: center; width: 100%; max-width: 300px; justify-content: flex-end;">
+    <div style="display: flex; gap: 8px; align-items: center; width: 100%; max-width: 380px; justify-content: flex-end;">
         <span class="staff-tag" id="currentStaffBadge">Staff: Counter Admin</span>
+        <button onclick="sendBackupToWhatsApp('Manual Custom Backup')" style="width: auto; margin: 0; padding: 6px 10px; font-size: 12px; background: #25d366; color: #000; min-height: 36px;">📲 Backup WA</button>
         <button onclick="openSettingsModal()" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; background: #251f3d; border: 1px solid #3c346b; min-height: 36px;">⚙️ Settings</button>
     </div>
 </div>
@@ -320,11 +316,21 @@
             <option value="enabled">Auto-Open WhatsApp App On Check-In</option>
         </select>
 
+        <hr style="border-color: #2a244d; margin: 14px 0;">
+
+        <h3 style="color: #00f0ff; font-size: 14px; margin-bottom: 6px;">💾 Database & Backup Tools</h3>
+        <p style="font-size: 11px; color: #8c82c2; margin-bottom: 8px;">Auto Backups run daily at <b>10:00 PM</b> and <b>02:00 AM</b> to WhatsApp number: <b>+923428020029</b></p>
+        
+        <button onclick="sendBackupToWhatsApp('Custom Manual Backup')" style="background: #25d366; color: #000;">📲 CUSTOM SEND BACKUP TO WHATSAPP</button>
+        <button onclick="downloadBackupFile()" style="background: #00b894; color: #000; margin-top: 8px;">💾 DOWNLOAD BACKUP FILE (.JSON)</button>
+
         <button onclick="closeSettingsModal()" style="background: #d63031; margin-top: 16px;">CLOSE SETTINGS</button>
     </div>
 </div>
 
 <script>
+    const BACKUP_PHONE = '923428020029'; // TARGET BACKUP WHATSAPP NUMBER
+
     function formatName(n) { return n.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); }
     function formatPhone(p) { return p.replace(/[^0-9]/g, '').trim(); }
 
@@ -343,6 +349,7 @@
     let activeSessions = JSON.parse(localStorage.getItem(PERMANENT_SESSIONS_KEY)) || [];
     let activeStaff = localStorage.getItem('vr_staff') || 'Counter Admin';
     let autoWaSetting = localStorage.getItem('vr_autowa') || 'disabled';
+    let lastAutoBackupTime = localStorage.getItem('vr_last_autobackup') || '';
     let html5QrCode = null;
 
     document.getElementById('currentStaffBadge').innerText = `Staff: ${activeStaff}`;
@@ -350,12 +357,77 @@
     document.getElementById('autoWaToggle').value = autoWaSetting;
 
     setInterval(updateTimersDisplay, 1000);
+    setInterval(checkScheduledBackup, 30000); // Check auto-backup schedule every 30s
     renderTables();
 
     function saveData() {
         localStorage.setItem(PERMANENT_MEMBERS_KEY, JSON.stringify(members));
         localStorage.setItem(PERMANENT_AUDIT_KEY, JSON.stringify(auditLogs));
         localStorage.setItem(PERMANENT_SESSIONS_KEY, JSON.stringify(activeSessions));
+    }
+
+    function generateBackupPayload() {
+        return {
+            timestamp: new Date().toLocaleString(),
+            totalMembers: Object.keys(members).length,
+            members: members,
+            auditLogs: auditLogs,
+            activeSessions: activeSessions
+        };
+    }
+
+    function downloadBackupFile() {
+        const payload = generateBackupPayload();
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+        const downloadAnchor = document.createElement('a');
+        const filename = `VR_Arena_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", filename);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        addAudit(`Downloaded Database Backup File`);
+    }
+
+    function sendBackupToWhatsApp(label = 'System Backup') {
+        const payload = generateBackupPayload();
+        const currentDate = new Date().toLocaleString();
+        
+        let msg = `📦 *VR GAMING ARENA - SYSTEM BACKUP*\n`;
+        msg += `📅 *Date/Time:* ${currentDate}\n`;
+        msg += `🏷️ *Type:* ${label}\n`;
+        msg += `👤 *Staff:* ${activeStaff}\n`;
+        msg += `📊 *Total Members:* ${payload.totalMembers}\n`;
+        msg += `📝 *Audit Logs:* ${payload.auditLogs.length}\n\n`;
+        msg += `*--- DATA SUMMARY ---*\n`;
+
+        for (let p in members) {
+            msg += `• ${members[p].name} (${members[p].phone}) - Exp: ${members[p].expiryDate || 'N/A'}\n`;
+        }
+
+        const encodedMsg = encodeURIComponent(msg);
+        window.location.href = `whatsapp://send?phone=${BACKUP_PHONE}&text=${encodedMsg}`;
+        addAudit(`Sent WhatsApp Backup to +${BACKUP_PHONE}`);
+    }
+
+    function checkScheduledBackup() {
+        const now = new Date();
+        const hours = now.getHours();
+        const mins = now.getMinutes();
+        const currentDateStr = now.toISOString().split('T')[0];
+        
+        // Target: 10:00 PM (22:00) or 2:00 AM (02:00)
+        if ((hours === 22 && mins === 0) || (hours === 2 && mins === 0)) {
+            const timeKey = `${currentDateStr}_${hours}:${mins}`;
+            if (lastAutoBackupTime !== timeKey) {
+                lastAutoBackupTime = timeKey;
+                localStorage.setItem('vr_last_autobackup', timeKey);
+                
+                downloadBackupFile();
+                sendBackupToWhatsApp(`Auto Scheduled Backup (${hours === 22 ? '10:00 PM' : '02:00 AM'})`);
+            }
+        }
     }
 
     function sendWhatsAppAndroid(phone, message) {
