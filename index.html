@@ -17,7 +17,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             margin: 0; 
             padding: 0; 
-            touch-action: manipulation; /* Removes tap delay on iOS & Android */
+            touch-action: manipulation;
         }
 
         html, body {
@@ -61,7 +61,6 @@
             white-space: nowrap;
         }
         
-        /* RESPONSIVE AUTO-ADJUST DASHBOARD GRID */
         .dashboard { 
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
@@ -120,7 +119,7 @@
             border: 1px solid #3c346b; 
             background: #0b0914; 
             color: #fff; 
-            font-size: 15px; /* Prevents auto-zoom on iOS */
+            font-size: 15px; 
             min-height: 46px; 
             -webkit-appearance: none;
         }
@@ -171,7 +170,6 @@
         .timer-btn { background: #00b894; color: #000; font-size: 14px; font-weight: bold; padding: 10px; margin-top: 8px; border-radius: 6px; width: 100%; }
         .wa-btn { background: #25d366; color: #000; font-size: 13px; font-weight: bold; padding: 10px; margin-top: 8px; border: none; cursor: pointer; width: 100%; border-radius: 6px; }
 
-        /* DYNAMIC AUTO-FITTING TIMERS GRID */
         .timers-container { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); 
@@ -207,7 +205,6 @@
         .btn-resume { background: #00b894; color: #000; }
         .btn-stop { background: #d63031; color: #fff; }
 
-        /* TOUCH-FRIENDLY SCROLLABLE TABLES */
         .table-wrapper { 
             flex: 1; 
             overflow-x: auto; 
@@ -229,7 +226,6 @@
         .action-edit { background: #6c5ce7; color: white; }
         .action-delete { background: #d63031; color: white; }
 
-        /* AUTO-ADJUST MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 12px; }
         .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 12px; width: 100%; max-width: 420px; padding: 16px; max-height: 90vh; overflow-y: auto; }
 
@@ -451,10 +447,10 @@
     </div>
 </div>
 
-<!-- SETTINGS MODAL -->
+<!-- SETTINGS & RESTORE MODAL -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
-        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 15px;">⚙️ System Settings</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 15px;">⚙️ System Settings & Data Management</h2>
         
         <label>Active Staff Name:</label>
         <input type="text" id="staffNameInput" value="Counter Admin" placeholder="e.g. Cashier 1">
@@ -470,11 +466,15 @@
 
         <hr style="border-color: #2a244d; margin: 14px 0;">
 
-        <h3 style="color: #00f0ff; font-size: 13px; margin-bottom: 6px;">💾 Database & Backup Tools</h3>
-        <p style="font-size: 11px; color: #8c82c2; margin-bottom: 8px;">Auto Backups run daily at <b>10:00 PM</b> and <b>02:00 AM</b> to WhatsApp number: <b>+923428020029</b></p>
+        <h3 style="color: #00f0ff; font-size: 13px; margin-bottom: 6px;">💾 Backup & Restore Tools</h3>
+        <p style="font-size: 11px; color: #8c82c2; margin-bottom: 8px;">Auto Backups run daily at <b>10:00 PM</b> and <b>02:00 AM</b> to WhatsApp: <b>+923428020029</b></p>
         
         <button onclick="sendBackupToWhatsApp('Custom Manual Backup')" style="background: #25d366; color: #000;">📲 CUSTOM SEND BACKUP TO WHATSAPP</button>
         <button onclick="downloadBackupFile()" style="background: #00b894; color: #000; margin-top: 8px;">💾 DOWNLOAD BACKUP FILE (.JSON)</button>
+        
+        <!-- RESTORE DATA INPUT & BUTTON -->
+        <button onclick="document.getElementById('importFileInput').click()" style="background: #e17055; color: #fff; margin-top: 8px;">📥 RESTORE DATABASE FROM FILE (.JSON)</button>
+        <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importBackupFile(event)">
 
         <button onclick="closeSettingsModal()" style="background: #d63031; margin-top: 16px;">CLOSE SETTINGS</button>
     </div>
@@ -543,6 +543,8 @@
     }
 
     function sendBackupToWhatsApp(label = 'System Backup') {
+        downloadBackupFile(); // Save copy locally to easily attach in WA
+        
         const payload = generateBackupPayload();
         const currentDate = new Date().toLocaleString();
         
@@ -552,7 +554,7 @@
         msg += `👤 *Staff:* ${activeStaff}\n`;
         msg += `📊 *Total Members:* ${payload.totalMembers}\n`;
         msg += `📝 *Audit Logs:* ${payload.auditLogs.length}\n\n`;
-        msg += `*--- DATA SUMMARY ---*\n`;
+        msg += `*--- MEMBERS LIST SUMMARY ---*\n`;
 
         for (let p in members) {
             msg += `• ${members[p].name} (${members[p].phone}) - Exp: ${members[p].expiryDate || 'N/A'}\n`;
@@ -561,6 +563,37 @@
         const encodedMsg = encodeURIComponent(msg);
         window.location.href = `whatsapp://send?phone=${BACKUP_PHONE}&text=${encodedMsg}`;
         addAudit(`Sent WhatsApp Backup to +${BACKUP_PHONE}`);
+    }
+
+    /* RESTORE DATABASE FUNCTION */
+    function importBackupFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data && (data.members || data.auditLogs)) {
+                    if (confirm(`Restore ${Object.keys(data.members || {}).length} members from backup file? This will replace your current browser database.`)) {
+                        members = data.members || {};
+                        auditLogs = data.auditLogs || [];
+                        activeSessions = data.activeSessions || [];
+                        saveData();
+                        renderTables();
+                        updateTimersDisplay();
+                        addAudit('Restored Database from JSON File');
+                        alert('✅ Database restored successfully!');
+                    }
+                } else {
+                    alert('❌ Invalid JSON Backup File format!');
+                }
+            } catch (err) {
+                alert('❌ Error reading backup file: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = ''; // Reset input selection
     }
 
     function checkScheduledBackup() {
