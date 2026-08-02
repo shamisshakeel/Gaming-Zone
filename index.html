@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VR Gaming Arena - Standard System</title>
+    <title>VR Gaming Arena - Responsive System</title>
 
     <!-- QR Code Generator Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -13,65 +13,68 @@
 
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
-        body { background-color: #0b0914; color: #ffffff; padding: 10px; min-height: 100vh; }
+        body { background-color: #0b0914; color: #ffffff; padding: 12px; min-height: 100vh; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a244d; padding-bottom: 8px; margin-bottom: 12px; }
-        .header h1 { font-size: 18px; color: #00f0ff; text-transform: uppercase; letter-spacing: 1px; }
-        .staff-tag { background: #251f3d; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1px solid #6c5ce7; color: #a29bfe; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a244d; padding-bottom: 10px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .header h1 { font-size: 20px; color: #00f0ff; text-transform: uppercase; letter-spacing: 1px; }
+        .staff-tag { background: #251f3d; padding: 6px 12px; border-radius: 20px; font-size: 13px; border: 1px solid #6c5ce7; color: #a29bfe; font-weight: 500; }
         
-        .dashboard { display: grid; grid-template-columns: 320px 1fr 380px; gap: 12px; min-height: calc(100vh - 60px); }
-        .column { display: flex; flex-direction: column; gap: 12px; }
+        .dashboard { display: grid; grid-template-columns: 340px 1fr 380px; gap: 14px; min-height: calc(100vh - 70px); }
+        .column { display: flex; flex-direction: column; gap: 14px; }
         
-        .card { background: #151226; border: 1px solid #2a244d; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; }
-        .card h2 { font-size: 13px; color: #a29bfe; margin-bottom: 8px; border-bottom: 1px solid #2a244d; padding-bottom: 4px; text-transform: uppercase; display: flex; justify-content: space-between; }
+        .card { background: #151226; border: 1px solid #2a244d; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; }
+        .card h2 { font-size: 14px; color: #a29bfe; margin-bottom: 10px; border-bottom: 1px solid #2a244d; padding-bottom: 6px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
-        label { font-size: 11px; color: #8c82c2; font-weight: bold; margin-top: 6px; display: block; }
-        input, select, button { width: 100%; padding: 8px 10px; margin-top: 3px; border-radius: 5px; border: 1px solid #3c346b; background: #0b0914; color: #fff; font-size: 13px; }
-        input:focus, select:focus { outline: 1px solid #00f0ff; }
+        label { font-size: 12px; color: #8c82c2; font-weight: bold; margin-top: 8px; display: block; }
+        input, select, button { width: 100%; padding: 10px 12px; margin-top: 4px; border-radius: 8px; border: 1px solid #3c346b; background: #0b0914; color: #fff; font-size: 15px; min-height: 44px; }
+        input:focus, select:focus { outline: 2px solid #00f0ff; }
         
-        button { background: #6c5ce7; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 8px; transition: 0.2s; min-height: 34px; }
+        button { background: #6c5ce7; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        button:active { opacity: 0.8; transform: scale(0.98); }
         button:hover { background: #00f0ff; color: #000; }
         
-        .status-box { padding: 10px; border-radius: 6px; font-size: 12px; display: none; margin-top: 8px; line-height: 1.4; }
+        .status-box { padding: 12px; border-radius: 8px; font-size: 13px; display: none; margin-top: 10px; line-height: 1.5; }
         .status-success { background: #004d40; border: 1px solid #00b894; color: #e0f2f1; }
         .status-expired { background: #4a0e0e; border: 1px solid #d63031; color: #ffebee; }
         .status-warning { background: #5c4300; border: 1px solid #fdcb6e; color: #fff8e1; }
         
-        .timer-btn { background: #00b894; color: #000; font-size: 12px; font-weight: bold; padding: 8px; margin-top: 6px; border-radius: 4px; width: 100%; }
-        .wa-btn { background: #25d366; color: #000; font-size: 11px; font-weight: bold; padding: 8px; margin-top: 6px; border: none; cursor: pointer; width: 100%; border-radius: 4px; }
+        .timer-btn { background: #00b894; color: #000; font-size: 14px; font-weight: bold; padding: 10px; margin-top: 8px; border-radius: 6px; width: 100%; }
+        .wa-btn { background: #25d366; color: #000; font-size: 13px; font-weight: bold; padding: 10px; margin-top: 8px; border: none; cursor: pointer; width: 100%; border-radius: 6px; }
 
-        .timers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
-        .timer-card { background: #1c1833; border: 1px solid #3c346b; border-radius: 6px; padding: 10px; text-align: center; }
+        .timers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .timer-card { background: #1c1833; border: 1px solid #3c346b; border-radius: 8px; padding: 12px; text-align: center; }
         .timer-card.paused { border-color: #fdcb6e; background: #262111; }
         .timer-card.time-up { border-color: #d63031; background: #3b1111; animation: blink 1s infinite; }
         
         @keyframes blink { 50% { border-color: transparent; } }
 
-        .timer-card .device-badge { font-size: 10px; background: #6c5ce7; color: #fff; padding: 2px 6px; border-radius: 3px; font-weight: bold; display: inline-block; margin-bottom: 4px; }
-        .timer-card .name { font-size: 13px; font-weight: bold; color: #fff; }
-        .timer-card .clock { font-size: 22px; font-weight: bold; color: #00f0ff; background: #090712; border-radius: 4px; padding: 4px 0; font-family: monospace; margin: 4px 0; }
+        .timer-card .device-badge { font-size: 11px; background: #6c5ce7; color: #fff; padding: 3px 8px; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 6px; }
+        .timer-card .name { font-size: 14px; font-weight: bold; color: #fff; }
+        .timer-card .clock { font-size: 24px; font-weight: bold; color: #00f0ff; background: #090712; border-radius: 6px; padding: 6px 0; font-family: monospace; margin: 6px 0; }
         .timer-card.paused .clock { color: #fdcb6e; }
         .timer-card.time-up .clock { color: #ff7675; }
         
-        .timer-controls { display: flex; gap: 4px; margin-top: 6px; }
-        .timer-ctrl-btn { font-size: 10px; padding: 4px; border-radius: 3px; min-height: auto; flex: 1; margin-top: 0; }
+        .timer-controls { display: flex; gap: 6px; margin-top: 8px; }
+        .timer-ctrl-btn { font-size: 12px; padding: 8px; border-radius: 6px; min-height: 38px; flex: 1; margin-top: 0; }
         .btn-pause { background: #fdcb6e; color: #000; }
         .btn-resume { background: #00b894; color: #000; }
         .btn-stop { background: #d63031; color: #fff; }
 
-        .table-wrapper { flex: 1; overflow-y: auto; max-height: 220px; margin-top: 4px; border: 1px solid #2a244d; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #2a244d; }
-        th { background: #1c1833; color: #00f0ff; position: sticky; top: 0; }
+        .table-wrapper { flex: 1; overflow-x: auto; max-height: 240px; margin-top: 6px; border: 1px solid #2a244d; border-radius: 6px; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 320px; }
+        th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #2a244d; vertical-align: middle; }
+        th { background: #1c1833; color: #00f0ff; position: sticky; top: 0; z-index: 10; }
         tr:nth-child(even) { background: #0d0b1a; }
         
-        .action-icon { cursor: pointer; margin-left: 2px; padding: 2px 4px; border-radius: 3px; font-size: 10px; }
-        .action-card { background: #00b894; color: #000; font-weight: bold; }
+        /* TOUCH-FRIENDLY ACTION BUTTONS */
+        .action-group { display: flex; gap: 4px; flex-wrap: nowrap; }
+        .action-btn { cursor: pointer; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; min-height: 32px; width: auto; margin: 0; border: none; display: inline-flex; align-items: center; justify-content: center; }
+        .action-card { background: #00b894; color: #000; }
         .action-edit { background: #6c5ce7; color: white; }
         .action-delete { background: #d63031; color: white; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 8px; width: 100%; max-width: 450px; padding: 15px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 12px; }
+        .modal-content { background: #151226; border: 1px solid #00f0ff; border-radius: 12px; width: 100%; max-width: 450px; padding: 16px; max-height: 90vh; overflow-y: auto; }
 
         /* DEBIT CARD SIZE STYLING (Standard CR80 Ratio: 325px x 204px) */
         .member-card-wrapper {
@@ -101,7 +104,7 @@
         .qr-container { background: #fff; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 
         /* CAMERA READER STYLING */
-        #qr-reader { width: 100%; border: 2px solid #00f0ff; border-radius: 8px; overflow: hidden; }
+        #qr-reader { width: 100%; border: 2px solid #00f0ff; border-radius: 8px; overflow: hidden; background: #000; }
         #qr-reader video { width: 100% !important; border-radius: 6px; }
 
         /* PRINT MEDIA RULE: PRINTS EXACT DEBIT CARD SIZE */
@@ -127,9 +130,13 @@
             #printableCard .card-phone, #printableCard .card-details { color: #333 !important; }
         }
 
-        @media (max-width: 900px) {
+        /* MOBILE & TABLET LAYOUT RESPONSIVENESS */
+        @media (max-width: 980px) {
             .dashboard { grid-template-columns: 1fr; }
-            body { padding: 5px; }
+            body { padding: 8px; }
+            .header h1 { font-size: 18px; }
+            .timer-card .clock { font-size: 28px; }
+            .modal-content { padding: 14px; width: 95%; }
         }
     </style>
 </head>
@@ -137,9 +144,9 @@
 
 <div class="header">
     <h1>🎮 VR Gaming Arena</h1>
-    <div style="display: flex; gap: 8px; align-items: center;">
+    <div style="display: flex; gap: 8px; align-items: center; width: 100%; max-width: 300px; justify-content: flex-end;">
         <span class="staff-tag" id="currentStaffBadge">Staff: Counter Admin</span>
-        <button onclick="openSettingsModal()" style="width: auto; margin: 0; padding: 4px 10px; font-size: 11px; background: #251f3d; border: 1px solid #3c346b;">⚙️ Settings</button>
+        <button onclick="openSettingsModal()" style="width: auto; margin: 0; padding: 6px 12px; font-size: 12px; background: #251f3d; border: 1px solid #3c346b; min-height: 36px;">⚙️ Settings</button>
     </div>
 </div>
 
@@ -148,16 +155,16 @@
     <div class="column">
         <!-- CHECK-IN / SCANNER -->
         <div class="card">
-            <h2>⚡ Member Verification & Check-In</h2>
+            <h2>⚡ Member Verification</h2>
             <form onsubmit="event.preventDefault(); checkInMember();">
-                <label>Phone Number or Scanned Code:</label>
+                <label>Phone Number or Code:</label>
                 <div style="display: flex; gap: 6px;">
-                    <input type="tel" id="checkInPhone" placeholder="Enter Phone or Scan QR" autofocus required>
-                    <button type="submit" style="width: 80px; margin-top: 3px; background: #00f0ff; color: #000;">VERIFY</button>
+                    <input type="tel" id="checkInPhone" placeholder="Enter Phone / Scan Code" autofocus required style="flex: 1;">
+                    <button type="submit" style="width: 90px; margin-top: 4px; background: #00f0ff; color: #000;">VERIFY</button>
                 </div>
             </form>
             
-            <button type="button" onclick="openCameraScanner()" style="background: #00b894; color: #000; font-weight: bold; margin-top: 8px;">
+            <button type="button" onclick="openCameraScanner()" style="background: #00b894; color: #000; font-weight: bold; margin-top: 10px;">
                 📷 SCAN QR WITH CAMERA
             </button>
 
@@ -192,10 +199,10 @@
 
     <!-- MIDDLE COLUMN -->
     <div class="column">
-        <div class="card" style="min-height: 350px;">
+        <div class="card" style="min-height: 300px;">
             <h2>
                 <span>⏱️ Live Gaming Timers</span>
-                <span id="activeCount" style="color: #00f0ff; font-size: 11px;">0 Active</span>
+                <span id="activeCount" style="color: #00f0ff; font-size: 12px;">0 Active</span>
             </h2>
             <div id="timersGrid" class="timers-container"></div>
         </div>
@@ -213,7 +220,7 @@
                             <th>Phone</th>
                             <th>Name</th>
                             <th>Expiry</th>
-                            <th>Actions</th>
+                            <th style="text-align: center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="membersTable"></tbody>
@@ -243,16 +250,16 @@
 <!-- CAMERA SCANNER MODAL -->
 <div id="cameraModal" class="modal">
     <div class="modal-content" style="text-align: center;">
-        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">📷 Align Member Card QR Code</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 16px;">📷 Align Member Card QR Code</h2>
         <div id="qr-reader"></div>
-        <button onclick="closeCameraScanner()" style="background: #d63031; margin-top: 12px;">CANCEL SCAN</button>
+        <button onclick="closeCameraScanner()" style="background: #d63031; margin-top: 14px;">CANCEL SCAN</button>
     </div>
 </div>
 
 <!-- CARD PRINT MODAL -->
 <div id="cardModal" class="modal">
     <div class="modal-content" style="text-align: center;">
-        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">📇 Member Digital Card</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 16px;">📇 Member Digital Card</h2>
         
         <div id="printableCard" class="member-card-wrapper">
             <div class="card-top">
@@ -275,14 +282,14 @@
         </div>
 
         <button onclick="window.print()" style="background: #00b894; color:#000;">🖨️ PRINT MEMBER CARD</button>
-        <button onclick="closeCardModal()" style="background: #d63031; margin-top: 6px;">CLOSE</button>
+        <button onclick="closeCardModal()" style="background: #d63031; margin-top: 8px;">CLOSE</button>
     </div>
 </div>
 
 <!-- EDIT MEMBER MODAL -->
 <div id="editModal" class="modal">
     <div class="modal-content">
-        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">✏️ Edit Member Details</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 16px;">✏️ Edit Member Details</h2>
         <input type="hidden" id="editMemberPhone">
         
         <label>Member Name:</label>
@@ -292,20 +299,20 @@
         <input type="date" id="editMemberExpiry">
 
         <button onclick="saveMemberEdit()" style="background: #00b894; color:#000;">SAVE CHANGES</button>
-        <button onclick="closeEditModal()" style="background: #d63031; margin-top: 6px;">CANCEL</button>
+        <button onclick="closeEditModal()" style="background: #d63031; margin-top: 8px;">CANCEL</button>
     </div>
 </div>
 
 <!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
-        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">⚙️ System Settings</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 12px; font-size: 16px;">⚙️ System Settings</h2>
         
         <label>Active Staff Name:</label>
         <input type="text" id="staffNameInput" value="Counter Admin" placeholder="e.g. Cashier 1">
         <button onclick="updateStaff()" style="background: #251f3d; border: 1px solid #6c5ce7;">UPDATE STAFF</button>
         
-        <hr style="border-color: #2a244d; margin: 12px 0;">
+        <hr style="border-color: #2a244d; margin: 14px 0;">
 
         <label>Android Auto WhatsApp Mode:</label>
         <select id="autoWaToggle" onchange="toggleAutoWa()">
@@ -313,7 +320,7 @@
             <option value="enabled">Auto-Open WhatsApp App On Check-In</option>
         </select>
 
-        <button onclick="closeSettingsModal()" style="background: #d63031; margin-top: 15px;">CLOSE SETTINGS</button>
+        <button onclick="closeSettingsModal()" style="background: #d63031; margin-top: 16px;">CLOSE SETTINGS</button>
     </div>
 </div>
 
@@ -441,7 +448,7 @@
                 Package: ${m.packageName}<br>
                 Expiry Date: <b>${m.expiryDate}</b><br>
                 <label>Assign Device / Station:</label>
-                <select id="deviceSelect" style="margin-bottom: 6px;">
+                <select id="deviceSelect" style="margin-bottom: 8px;">
                     <option value="VR Station">🎮 VR Station</option>
                     <option value="PS4 Console">⚽ PS4 Console</option>
                     <option value="Car Simulator">🏎️ Car Simulator</option>
@@ -641,9 +648,11 @@
                     <td>${m.name}</td>
                     <td>${m.expiryDate || 'N/A'}</td>
                     <td>
-                        <span class="action-icon action-card" onclick="openCardModal('${m.phone}')">📇</span>
-                        <span class="action-icon action-edit" onclick="openEditModal('${m.phone}')">✏️</span>
-                        <span class="action-icon action-delete" onclick="deleteMember('${m.phone}')">🗑️</span>
+                        <div class="action-group">
+                            <button class="action-btn action-card" onclick="openCardModal('${m.phone}')">📇 Card</button>
+                            <button class="action-btn action-edit" onclick="openEditModal('${m.phone}')">✏️ Edit</button>
+                            <button class="action-btn action-delete" onclick="deleteMember('${m.phone}')">🗑️ Delete</button>
+                        </div>
                     </td>
                 </tr>`;
         }
