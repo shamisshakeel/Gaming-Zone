@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VR Gaming Arena - Live Cloud Sync</title>
-
-    <!-- Firebase Cloud Sync Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <title>VR Gaming Arena - Offline & Android WhatsApp</title>
 
     <style>
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
@@ -36,7 +32,7 @@
         .status-warning { background: #5c4300; border: 1px solid #fdcb6e; color: #fff8e1; }
         
         .timer-btn { background: #00b894; color: #000; font-size: 12px; font-weight: bold; padding: 8px; margin-top: 6px; border-radius: 4px; width: 100%; }
-        .wa-btn { background: #25d366; color: #000; font-size: 11px; font-weight: bold; padding: 6px; margin-top: 5px; border-radius: 4px; text-decoration: none; display: inline-block; text-align: center; }
+        .wa-btn { background: #25d366; color: #000; font-size: 11px; font-weight: bold; padding: 8px; margin-top: 6px; border-radius: 4px; border: none; cursor: pointer; width: 100%; }
 
         .timers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
         .timer-card { background: #1c1833; border: 1px solid #3c346b; border-radius: 6px; padding: 10px; text-align: center; }
@@ -170,7 +166,7 @@
 <!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal">
     <div class="modal-content">
-        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">⚙️ Cloud & System Settings</h2>
+        <h2 style="color: #00f0ff; margin-bottom: 10px; font-size: 15px;">⚙️ System Settings</h2>
         
         <label>Active Staff Name:</label>
         <input type="text" id="staffNameInput" value="Counter Admin" placeholder="e.g. Cashier 1">
@@ -178,90 +174,56 @@
         
         <hr style="border-color: #2a244d; margin: 12px 0;">
 
-        <label>Cloud Sync Key (Must match on all devices):</label>
-        <input type="text" id="syncKeyInput" placeholder="e.g. vrarena-karachi-123">
-        <button onclick="connectCloud()" style="background: #00b894; color:#000;">CONNECT LIVE SYNC</button>
-        <div id="syncStatus" style="font-size: 11px; margin-top: 6px; color: #55efc4; text-align: center;"></div>
+        <label>Android Auto WhatsApp Mode:</label>
+        <select id="autoWaToggle" onchange="toggleAutoWa()">
+            <option value="disabled">Manual (Click Button to Send)</option>
+            <option value="enabled">Auto-Open WhatsApp App On Check-In</option>
+        </select>
 
         <button onclick="closeSettingsModal()" style="background: #d63031; margin-top: 15px;">CLOSE SETTINGS</button>
     </div>
 </div>
 
 <script>
-    // Free Public Cloud Database Config
-    const firebaseConfig = {
-        databaseURL: "https://vr-arena-default-rtdb.firebaseio.com"
-    };
-
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
-
     function formatName(n) { return n.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase()); }
     function formatPhone(p) { return p.replace(/[^0-9]/g, '').trim(); }
 
-    let members = JSON.parse(localStorage.getItem('vr_members_v7')) || {};
-    let auditLogs = JSON.parse(localStorage.getItem('vr_audit_v7')) || [];
-    let activeSessions = JSON.parse(localStorage.getItem('vr_sessions_v7')) || [];
+    // Format phone number specifically for Pakistan WhatsApp Android App
+    function formatWhatsAppPhone(p) {
+        let cleaned = formatPhone(p);
+        if (cleaned.startsWith('03')) {
+            cleaned = '92' + cleaned.substring(1);
+        }
+        return cleaned;
+    }
+
+    let members = JSON.parse(localStorage.getItem('vr_members_v8')) || {};
+    let auditLogs = JSON.parse(localStorage.getItem('vr_audit_v8')) || [];
+    let activeSessions = JSON.parse(localStorage.getItem('vr_sessions_v8')) || [];
     let activeStaff = localStorage.getItem('vr_staff') || 'Counter Admin';
-    let syncKey = localStorage.getItem('vr_sync_key') || 'vr-arena-default';
+    let autoWaSetting = localStorage.getItem('vr_autowa') || 'disabled';
 
     document.getElementById('currentStaffBadge').innerText = `Staff: ${activeStaff}`;
     document.getElementById('staffNameInput').value = activeStaff;
-    document.getElementById('syncKeyInput').value = syncKey;
+    document.getElementById('autoWaToggle').value = autoWaSetting;
 
     setInterval(updateTimersDisplay, 1000);
     renderTables();
-    listenToCloud();
 
     function saveData() {
-        localStorage.setItem('vr_members_v7', JSON.stringify(members));
-        localStorage.setItem('vr_audit_v7', JSON.stringify(auditLogs));
-        localStorage.setItem('vr_sessions_v7', JSON.stringify(activeSessions));
-        
-        if (syncKey) {
-            db.ref('arenas/' + syncKey).set({
-                members: members,
-                auditLogs: auditLogs,
-                activeSessions: activeSessions
-            });
-        }
+        localStorage.setItem('vr_members_v8', JSON.stringify(members));
+        localStorage.setItem('vr_audit_v8', JSON.stringify(auditLogs));
+        localStorage.setItem('vr_sessions_v8', JSON.stringify(activeSessions));
     }
 
-    function listenToCloud() {
-        if (!syncKey) return;
-        const statusEl = document.getElementById('syncStatus');
-        statusEl.innerText = "Connecting to Live Cloud...";
-
-        db.ref('arenas/' + syncKey).on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                members = data.members || {};
-                auditLogs = data.auditLogs || [];
-                activeSessions = data.activeSessions || [];
-
-                localStorage.setItem('vr_members_v7', JSON.stringify(members));
-                localStorage.setItem('vr_audit_v7', JSON.stringify(auditLogs));
-                localStorage.setItem('vr_sessions_v7', JSON.stringify(activeSessions));
-
-                renderTables();
-                updateTimersDisplay();
-                statusEl.innerText = "✓ Connected Live & Synced Across All Devices!";
-            } else {
-                statusEl.innerText = "✓ Sync Key Set! Ready to stream data.";
-            }
-        });
-    }
-
-    function connectCloud() {
-        syncKey = document.getElementById('syncKeyInput').value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
-        if (!syncKey) return alert('Please enter a valid Sync Key');
+    // Direct WhatsApp Android Protocol Trigger
+    function sendWhatsAppAndroid(phone, message) {
+        const targetPhone = formatWhatsAppPhone(phone);
+        const encodedMsg = encodeURIComponent(message);
         
-        localStorage.setItem('vr_sync_key', syncKey);
-        saveData();
-        listenToCloud();
-        alert('Sync Key Saved! Devices using this key will now share live data.');
+        // Direct intent link for Android app
+        const waUrl = `whatsapp://send?phone=${targetPhone}&text=${encodedMsg}`;
+        window.location.href = waUrl;
     }
 
     function addAudit(action) {
@@ -321,15 +283,21 @@
 
         if (today > expDate) {
             m.status = 'Expired';
-            const waMsg = encodeURIComponent(`Hi ${m.name}, your membership at VR Gaming Arena expired on ${m.expiryDate}. Visit us to renew!`);
+            const waMsg = `Hi ${m.name}, your membership at VR Gaming Arena expired on ${m.expiryDate}. Visit us to renew!`;
+            
             resultBox.className = 'status-box status-expired';
             resultBox.innerHTML = `
                 🚨 <b>MEMBERSHIP EXPIRED</b><br>Name: ${m.name}<br>Ended On: ${m.expiryDate}<br>
-                <a href="https://wa.me/${m.phone}?text=${waMsg}" target="_blank" class="wa-btn">📲 Send WA Renewal Alert</a>
+                <button onclick="sendWhatsAppAndroid('${m.phone}', '${waMsg}')" class="wa-btn">📲 OPEN WHATSAPP RENEWAL ALERT</button>
             `;
+            
+            if (autoWaSetting === 'enabled') {
+                sendWhatsAppAndroid(m.phone, waMsg);
+            }
             addAudit(`Check-in Failed (Expired): ${m.name}`);
         } else {
-            const waMsg = encodeURIComponent(`Hi ${m.name}, welcome to VR Gaming Arena! Your session limit is ${m.minutes} mins. Package valid until ${m.expiryDate}.`);
+            const waMsg = `Hi ${m.name}, welcome to VR Gaming Arena! Your session limit is ${m.minutes} mins. Package valid until ${m.expiryDate}.`;
+            
             resultBox.className = 'status-box status-success';
             resultBox.innerHTML = `
                 <b>✅ ACCESS GRANTED</b><br>Name: ${m.name} | Expires: ${m.expiryDate}<br>
@@ -340,8 +308,12 @@
                     <option value="Car Simulator">🏎️ Car Simulator</option>
                 </select>
                 <button class="timer-btn" onclick="startSession('${m.phone}')">▶ START SESSION (${m.minutes} MINS)</button>
-                <a href="https://wa.me/${m.phone}?text=${waMsg}" target="_blank" class="wa-btn">📲 Send WA Welcome Note</a>
+                <button onclick="sendWhatsAppAndroid('${m.phone}', '${waMsg}')" class="wa-btn">📲 SEND WHATSAPP MESSAGE</button>
             `;
+            
+            if (autoWaSetting === 'enabled') {
+                sendWhatsAppAndroid(m.phone, waMsg);
+            }
             addAudit(`Checked-in: ${m.name}`);
         }
         saveData();
@@ -424,6 +396,11 @@
         localStorage.setItem('vr_staff', activeStaff);
         document.getElementById('currentStaffBadge').innerText = `Staff: ${activeStaff}`;
         alert('Staff Updated!');
+    }
+
+    function toggleAutoWa() {
+        autoWaSetting = document.getElementById('autoWaToggle').value;
+        localStorage.setItem('vr_autowa', autoWaSetting);
     }
 </script>
 
